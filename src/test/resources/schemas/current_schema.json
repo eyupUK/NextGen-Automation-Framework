@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["location", "current"],
+  "properties": {
+    "location": {
+      "type": "object",
+      "required": ["name", "country", "lat", "lon"],
+      "properties": {
+        "name": { "type": "string" },
+        "country": { "type": "string" },
+        "lat": { "type": "number" },
+        "lon": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "current": {
+      "type": "object",
+      "required": ["temp_c", "condition", "last_updated_epoch"],
+      "properties": {
+        "temp_c": { "type": "number" },
+        "condition": {
+          "type": "object",
+          "required": ["text", "icon"],
+          "properties": {
+            "text": { "type": "string" },
+            "icon": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "last_updated_epoch": { "type": "integer" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

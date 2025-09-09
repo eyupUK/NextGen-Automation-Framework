@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["location", "forecast"],
+  "properties": {
+    "location": {
+      "type": "object",
+      "required": ["name", "country", "lat", "lon"],
+      "properties": {
+        "name": { "type": "string" },
+        "country": { "type": "string" },
+        "lat": { "type": "number" },
+        "lon": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "forecast": {
+      "type": "object",
+      "required": ["forecastday"],
+      "properties": {
+        "forecastday": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["date", "day"],
+            "properties": {
+              "date": { "type": "string" },
+              "day": {
+                "type": "object",
+                "required": ["maxtemp_c", "mintemp_c"],
+                "properties": {
+                  "maxtemp_c": { "type": "number" },
+                  "mintemp_c": { "type": "number" }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

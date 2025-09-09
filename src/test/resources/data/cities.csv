@@ -1,0 +1,5 @@
+query,expectedCountry,forecastDays
+London,United Kingdom,3
+SW1,UK,2
+"48.8567,2.3508",France,1
+90201,USA,2
