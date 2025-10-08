@@ -6,31 +6,33 @@ on:
 #  pull_request:
 #    branches: [ main ]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Add environment variables from secrets
     env:
+      # Expose to the process; tests can read from ENV
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '21'
+          cache: maven
 
-      - name: Set up Maven
-        uses: stCarolas/setup-maven@v4
-        with:
-          maven-version: '3.9.6'
-
-      - name: Build and test with Maven
-        run: mvn clean verify -DWEATHER_API_KEY="${WEATHER_API_KEY}"
+      - name: Build & test (Maven)
+        run: |
+          mvn -B -ntp clean verify \
+            -Dweather.api.key="${WEATHER_API_KEY}"
         env:
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
@@ -39,7 +41,23 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cucumber-report
-          path: target/cucumber-report.html
+          # adjust if your plugin outputs a different path/name
+          path: |
+            target/cucumber-report.html
+            target/cucumber-reports/**/*
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload surefire/failsafe reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/**/*
+            target/failsafe-reports/**/*
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Upload Allure results
         if: always()
@@ -47,3 +65,5 @@ jobs:
         with:
           name: allure-results
           path: allure-results/
+          if-no-files-found: ignore
+          retention-days: 14
