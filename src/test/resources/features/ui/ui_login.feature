@@ -12,6 +12,7 @@ Feature: Login
     When I login with username "<username>" and password "<password>"
     Then I should see the products page
 
+
     Examples:
       | username       | password     |
       | standard_user  | secret_sauce |

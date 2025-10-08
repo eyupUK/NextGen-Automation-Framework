@@ -15,14 +15,7 @@ public class CheckoutSteps {
     CheckoutOverviewPage overview = new CheckoutOverviewPage();
     CheckoutCompletePage complete = new CheckoutCompletePage();
 
-    @Given("I am a logged in shopper")
-    public void i_am_a_logged_in_shopper() {
-        login.open()
-                .enterUsername("standard_user")
-                .enterPassword("secret_sauce")
-                .submitLogin();
-        Assert.assertTrue("Products page not loaded after login.", inventory.isLoaded());
-    }
+
 
     @When("I add {string} to my cart and start checkout")
     public void i_add_item_and_start_checkout(String productName) {

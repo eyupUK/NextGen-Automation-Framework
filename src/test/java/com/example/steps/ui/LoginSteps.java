@@ -32,4 +32,5 @@ public class LoginSteps {
         Assert.assertTrue("Expected error to contain: " + expected + " but was: " + actual,
                 actual.contains(expected));
     }
+
 }

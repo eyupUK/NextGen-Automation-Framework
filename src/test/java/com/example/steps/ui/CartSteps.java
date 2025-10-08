@@ -3,6 +3,7 @@ package com.example.steps.ui;
 import com.example.pages.CartPage;
 import com.example.pages.InventoryPage;
 import com.example.pages.LoginPage;
+import com.example.util.ConfigurationReader;
 import io.cucumber.java.en.*;
 import org.junit.Assert;
 
@@ -14,13 +15,12 @@ public class CartSteps {
     LoginPage login = new LoginPage();
     InventoryPage inventory = new InventoryPage();
     CartPage cart = new CartPage();
+    String username = ConfigurationReader.get("STANDARD_USER");
+    String password = ConfigurationReader.get("STANDARD_PASSWORD");
 
     @Given("I am logged in as a standard user")
     public void i_am_logged_in_as_standard_user() {
-        login.open()
-                .enterUsername("standard_user")
-                .enterPassword("secret_sauce")
-                .submitLogin();
+        login.loginAsAStandartUser(username, password);
         Assert.assertTrue("Login failed; products page not loaded.", inventory.isLoaded());
     }
 

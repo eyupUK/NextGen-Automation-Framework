@@ -22,10 +22,6 @@ import java.util.HashMap;
  */
 public class Driver {
 
-//
-//    private Driver() {
-//    }
-
 
     /**
      * Singleton instance of the WebDriver.

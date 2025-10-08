@@ -58,6 +58,7 @@ public class WeatherApiSteps {
     @Then("the payload has valid current weather types")
     public void payload_has_valid_types() {
         JsonPath jp = state.getLastResponse().then().extract().jsonPath();
+        System.out.println(jp.prettify());
         assertCurrentTypes(jp);
     }
 
@@ -80,6 +81,7 @@ public class WeatherApiSteps {
                 .queryParam("days", safeDays)
                 .get("/forecast.json");
         state.setLastResponse(res);
+        res.body().prettyPrint();
     }
 
     @Then("the payload contains exactly the requested number of forecast days")

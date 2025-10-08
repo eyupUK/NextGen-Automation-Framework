@@ -6,7 +6,7 @@ Feature: Checkout
   So that I can receive my items
 
   Background:
-    Given I am a logged in shopper
+    Given I am logged in as a standard user
 
   Scenario: Complete a checkout flow
     When I add "Sauce Labs Backpack" to my cart and start checkout
