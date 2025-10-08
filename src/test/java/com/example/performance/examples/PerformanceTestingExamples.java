@@ -5,8 +5,6 @@ import com.example.performance.utils.PerformanceMetricsCollector;
 import com.example.performance.utils.LoadGenerator;
 import io.restassured.response.Response;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -14,7 +12,7 @@ import static io.restassured.RestAssured.given;
 
 /**
  * Performance Testing Examples
- *
+ * <p>
  * Demonstrates various performance testing patterns and best practices
  * These examples can be used as templates for creating custom performance tests
  */
@@ -72,8 +70,6 @@ public class PerformanceTestingExamples {
         int requestsPerUser = 5;
 
         for (int user = 1; user <= maxUsers; user++) {
-            final int currentUser = user;
-
             loadGen.execute(() -> {
                 for (int req = 0; req < requestsPerUser; req++) {
                     try {
@@ -198,7 +194,7 @@ public class PerformanceTestingExamples {
                         metrics.decrementActiveRequests();
 
                         // Think time: 1-3 seconds
-                        Thread.sleep(1000 + (long)(Math.random() * 2000));
+                        Thread.sleep(1000 + (long) (Math.random() * 2000));
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -272,17 +268,17 @@ public class PerformanceTestingExamples {
 
             simpleLoadTest();
             System.out.println("\n" + "─".repeat(60) + "\n");
-
-            // rampUpLoadTest();
-            // System.out.println("\n" + "─".repeat(60) + "\n");
-
-            // multiEndpointTest();
-            // System.out.println("\n" + "─".repeat(60) + "\n");
-
-            // concurrentUsersSimulation();
-            // System.out.println("\n" + "─".repeat(60) + "\n");
-
-            // throughputTest();
+//
+//            rampUpLoadTest();
+//            System.out.println("\n" + "─".repeat(60) + "\n");
+//
+//            multiEndpointTest();
+//            System.out.println("\n" + "─".repeat(60) + "\n");
+//
+//            concurrentUsersSimulation();
+//            System.out.println("\n" + "─".repeat(60) + "\n");
+//
+//            throughputTest();
 
             System.out.println("\n✓ All examples completed successfully!");
 
@@ -292,4 +288,3 @@ public class PerformanceTestingExamples {
         }
     }
 }
-

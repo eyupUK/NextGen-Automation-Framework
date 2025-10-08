@@ -11,12 +11,12 @@ import static io.gatling.javaapi.http.HttpDsl.*;
 
 /**
  * Weather API Performance Simulation
- *
+ * <p>
  * This simulation tests the Weather API under various load conditions:
  * - Load Test: Gradual ramp-up to verify system behavior under expected load
  * - Stress Test: Push the system beyond normal capacity to find breaking points
  * - Spike Test: Sudden burst of traffic to test system resilience
- *
+ * <p>
  * Industry Best Practices Implemented:
  * 1. Realistic user behavior modeling
  * 2. Think time between requests
@@ -86,7 +86,8 @@ public class WeatherApiPerformanceSimulation extends Simulation {
             constantUsersPerSec(5).during(Duration.ofSeconds(60));
 
     // Spike Test Profile: Sudden burst
-    private final OpenInjectionStep spikeTestProfile = atOnceUsers(PerformanceConfig.SPIKE_USERS);
+    private final OpenInjectionStep spikeTestProfile =
+            atOnceUsers(PerformanceConfig.USERS);
 
     {
         // Setup scenarios with injection profiles
@@ -113,12 +114,13 @@ public class WeatherApiPerformanceSimulation extends Simulation {
                                 .during(Duration.ofSeconds(PerformanceConfig.RAMP_UP_TIME))
                 ).protocols(httpProtocol)
         )
-        // Global assertions for SLA validation
-        .assertions(
-                global().responseTime().percentile3().lte(PerformanceConfig.RESPONSE_TIME_P95_THRESHOLD),
-                global().responseTime().percentile4().lte(PerformanceConfig.RESPONSE_TIME_P99_THRESHOLD),
-                global().successfulRequests().percent().gte(PerformanceConfig.SUCCESS_RATE_THRESHOLD),
-                global().responseTime().mean().lte(1000) // Mean response time under 1 second
-        );
+                // Global assertions for SLA validation
+                .assertions(
+                        global().responseTime().percentile3().lte(PerformanceConfig.RESPONSE_TIME_P95_THRESHOLD),
+                        global().responseTime().percentile4().lte(PerformanceConfig.RESPONSE_TIME_P99_THRESHOLD),
+                        global().successfulRequests().percent().gte(PerformanceConfig.SUCCESS_RATE_THRESHOLD),
+                        global().responseTime().mean().lte(1000) // Mean response time under 1 second
+                );
     }
 }
+
