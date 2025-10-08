@@ -32,8 +32,8 @@ on:
           - all
 
   # Run on schedule (weekly on Sundays at 2 AM)
-  schedule:
-    - cron: '0 2 * * 0'
+#  schedule:
+#    - cron: '0 2 * * 0'
 
   # Run on push to main/master (optional - comment out if not needed)
   # push:
