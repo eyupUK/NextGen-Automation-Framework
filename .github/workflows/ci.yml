@@ -31,8 +31,11 @@ jobs:
 
       - name: Build & test (Maven)
         run: |
+          mkdir -p "$RUNNER_TEMP/chrome"
           mvn -B -ntp clean verify \
-            -Dweather.api.key="${WEATHER_API_KEY}"
+          -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+          -Dheadless=true \
+          -Dchrome.userDataDir="${RUNNER_TEMP}/chrome"
         env:
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
