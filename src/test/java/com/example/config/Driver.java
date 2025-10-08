@@ -46,10 +46,18 @@ public class Driver {
                         options.addArguments("--disable-save-password-bubble");
                         options.addArguments("--disable-notifications");
                         options.addArguments("--incognito");
-                        // Add unique user data directory to prevent conflicts - with proper file separator
+
+                        // Create unique user data directory with proper permissions
                         String userDataDir = System.getProperty("java.io.tmpdir") + File.separator + "chrome-test-" + UUID.randomUUID();
+                        File userDir = new File(userDataDir);
+                        if (!userDir.exists()) {
+                            userDir.mkdirs();
+                        }
                         options.addArguments("--user-data-dir=" + userDataDir);
                         options.addArguments("--remote-allow-origins=*");
+                        options.addArguments("--no-sandbox");
+                        options.addArguments("--disable-dev-shm-usage");
+
                         options.setExperimentalOption("prefs", new HashMap<String, Object>() {{
                             put("credentials_enable_service", false);
                             put("profile.password_manager_enabled", false);
@@ -64,10 +72,21 @@ public class Driver {
                         options.addArguments("--disable-save-password-bubble");
                         options.addArguments("--disable-notifications");
                         options.addArguments("--incognito");
-                        // Add unique user data directory to prevent conflicts - with proper file separator
+
+                        // Create unique user data directory with proper permissions
                         String userDataDir = System.getProperty("java.io.tmpdir") + File.separator + "chrome-test-" + UUID.randomUUID();
+                        File userDir = new File(userDataDir);
+                        if (!userDir.exists()) {
+                            userDir.mkdirs();
+                        }
                         options.addArguments("--user-data-dir=" + userDataDir);
                         options.addArguments("--remote-allow-origins=*");
+
+                        // Additional CI/CD stability arguments
+                        options.addArguments("--no-sandbox");
+                        options.addArguments("--disable-dev-shm-usage");
+                        options.addArguments("--disable-extensions");
+
                         options.setExperimentalOption("prefs", new HashMap<String, Object>() {{
                             put("credentials_enable_service", false);
                             put("profile.password_manager_enabled", false);
@@ -81,14 +100,20 @@ public class Driver {
                         options.addArguments("--disable-save-password-bubble");
                         options.addArguments("--disable-notifications");
                         options.addArguments("--incognito");
-                        // Add unique user data directory to prevent conflicts - with proper file separator
+
+                        // Create unique user data directory with proper permissions
                         String userDataDir = System.getProperty("java.io.tmpdir") + File.separator + "chrome-test-" + UUID.randomUUID();
+                        File userDir = new File(userDataDir);
+                        if (!userDir.exists()) {
+                            userDir.mkdirs();
+                        }
                         options.addArguments("--user-data-dir=" + userDataDir);
                         options.addArguments("--remote-allow-origins=*");
                         options.addArguments("--no-sandbox");
                         options.addArguments("--disable-dev-shm-usage");
                         options.addArguments("--disable-extensions");
                         options.addArguments("--disable-infobars");
+
                         options.setExperimentalOption("prefs", new HashMap<String, Object>() {{
                             put("credentials_enable_service", false);
                             put("profile.password_manager_enabled", false);
