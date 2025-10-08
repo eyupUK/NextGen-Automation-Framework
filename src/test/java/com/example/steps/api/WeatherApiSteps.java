@@ -27,7 +27,7 @@ public class WeatherApiSteps {
     @Given("I have a valid WeatherAPI key configured")
     public void i_have_a_valid_key() {
         if (TestConfig.API_KEY == null || TestConfig.API_KEY.isBlank()) {
-            throw new IllegalStateException("Set WEATHERAPI_KEY as env or -D system property");
+            throw new IllegalStateException("Set WEATHER_API_KEY as env or -D system property");
         }
     }
 

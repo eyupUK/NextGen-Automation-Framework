@@ -7,8 +7,8 @@ import io.restassured.specification.RequestSpecification;
 
 public class TestConfig {
     public static final String BASE_URL = "https://api.weatherapi.com/v1";
-    public static final String API_KEY = System.getProperty("WEATHERAPI_KEY",
-            System.getenv().getOrDefault("WEATHERAPI_KEY", ConfigurationReader.get("WEATHER_API_KEY")));
+    public static final String API_KEY = System.getProperty("WEATHER_API_KEY",
+            System.getenv().getOrDefault("WEATHER_API_KEY", ConfigurationReader.get("WEATHER_API_KEY")));
 
     public static RequestSpecification baseSpec() {
         return new RequestSpecBuilder()
@@ -17,4 +17,3 @@ public class TestConfig {
                 .build();
     }
 }
-
