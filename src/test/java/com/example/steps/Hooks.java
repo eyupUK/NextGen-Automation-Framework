@@ -39,7 +39,7 @@ public class Hooks {
     @After
     public void tearDown(Scenario scenario) {
         boolean isApi = scenario.getSourceTagNames().contains("@api");
-        if (!isApi) {
+        if (!isApi && driver != null) {
             if (scenario.isFailed()) {
                 final byte[] screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
                 scenario.attach(screenshot, "image/png", "Failure_Screenshot");
