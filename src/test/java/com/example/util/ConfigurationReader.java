@@ -5,6 +5,7 @@ import java.util.Properties;
 
 /**
  * reads the properties file configuration.properties
+ * Supports environment variables for sensitive data (e.g., API keys)
  */
 public class ConfigurationReader {
 
@@ -24,6 +25,19 @@ public class ConfigurationReader {
     }
 
     public static String get(String keyName) {
+        // First check if there's an environment variable
+        String envValue = System.getenv(keyName);
+        if (envValue != null && !envValue.isEmpty()) {
+            return envValue;
+        }
+
+        // Then check system properties (for -D arguments)
+        String sysPropValue = System.getProperty(keyName);
+        if (sysPropValue != null && !sysPropValue.isEmpty()) {
+            return sysPropValue;
+        }
+
+        // Finally fall back to properties file
         return properties.getProperty(keyName);
     }
 

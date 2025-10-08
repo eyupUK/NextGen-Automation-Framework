@@ -10,6 +10,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # Add environment variables from secrets
+    env:
+      WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

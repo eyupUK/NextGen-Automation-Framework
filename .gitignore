@@ -1,0 +1,13 @@
+allure-results
+target
+.idea
+*.iml
+*.iws
+*.ipr
+*.log
+*.tmp
+
+# Sensitive configuration files - do not commit
+configuration.properties.local
+**/secrets/
+.env

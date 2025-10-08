@@ -17,6 +17,8 @@
         <junit.version>4.13.2</junit.version>
         <opencsv.version>5.12.0</opencsv.version>
         <jackson.version>2.20.0</jackson.version>
+        <gatling.version>3.10.3</gatling.version>
+        <gatling-maven-plugin.version>4.8.2</gatling-maven-plugin.version>
     </properties>
     <build>
         <plugins>
@@ -37,6 +39,21 @@
                         <!-- Headless mode toggle: -Dheadless=true -->
 <!--                        <headless>${headless}</headless>-->
                     </systemPropertyVariables>
+                    <!-- Exclude performance tests from regular test runs -->
+                    <excludes>
+                        <exclude>**/performance/**</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- Gatling Maven Plugin for Performance Testing -->
+            <plugin>
+                <groupId>io.gatling</groupId>
+                <artifactId>gatling-maven-plugin</artifactId>
+                <version>${gatling-maven-plugin.version}</version>
+                <configuration>
+                    <simulationClass>com.example.performance.simulations.WeatherApiPerformanceSimulation</simulationClass>
+                    <resultsFolder>${project.build.directory}/gatling-results</resultsFolder>
                 </configuration>
             </plugin>
 
@@ -198,6 +215,31 @@
             <groupId>net.masterthought</groupId>
             <artifactId>cucumber-reporting</artifactId>
             <version>5.10.1</version>
+        </dependency>
+
+        <!-- Performance Testing Dependencies -->
+        <!-- Gatling for Performance Testing -->
+        <dependency>
+            <groupId>io.gatling.highcharts</groupId>
+            <artifactId>gatling-charts-highcharts</artifactId>
+            <version>${gatling.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Apache HTTP Client for custom performance utilities -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>5.3</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Metrics for performance monitoring -->
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>4.2.25</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

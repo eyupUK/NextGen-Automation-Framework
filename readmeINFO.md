@@ -1,6 +1,6 @@
-# Automation Task: Selenium-Cucumber-Java Framework
+# Java-Cucumber-Selenium-Rest Assured Framework
 
-This repository provides an automation framework using Selenium, Cucumber, and Java for web application and API testing. It demonstrates BDD with Cucumber, integrates Selenium for UI automation, and supports API testing for domains like SauceLabs, Fake API Store, and weather APIs.
+This repository provides an automation framework using Selenium, Cucumber, Rest Assured and Java for web application and API testing. It demonstrates BDD with Cucumber, integrates Selenium for UI automation, and supports API testing for domains like SauceLabs, Fake API Store, and weather APIs.
 
 ## Prerequisites
 

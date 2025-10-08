@@ -1,3 +1,6 @@
+# Configuration Properties Template
+# Copy this file to configuration.properties and fill in your values
+
 # browser to run the test
 browser=chrome
 
@@ -7,9 +10,9 @@ sauceDemoUrl=https://www.saucedemo.com/
 
 # base url for testing GET method
 weather_api_base_url=http://api.weatherapi.com/v1
-# WEATHER_API_KEY is now loaded from environment variable or GitHub Secret
-# For local development: Set environment variable WEATHER_API_KEY
-# For GitHub Actions: Configure in repository secrets
+# IMPORTANT: Add your Weather API key as environment variable
+# Set WEATHER_API_KEY environment variable in your system
+# Example: export WEATHER_API_KEY=your_api_key_here
 
 
 # base url for testing POST method
@@ -25,3 +28,4 @@ perf.rampup=10
 perf.duration=60
 perf.spike.users=50
 perf.stress.users=100
+

@@ -1,0 +1,253 @@
+name: Stress Test Suite
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_users:
+        description: 'Maximum number of users for stress test'
+        required: true
+        default: '100'
+        type: string
+      duration:
+        description: 'Test duration in seconds'
+        required: true
+        default: '180'
+        type: string
+      notify_slack:
+        description: 'Send results to Slack'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  stress-test:
+    name: API Stress Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # Add environment variables from secrets
+    env:
+      WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install dependencies
+        run: mvn clean install -DskipTests
+
+      - name: Weather API Stress Test
+        id: weather-stress
+        run: |
+          echo "🔥 Running Weather API Stress Test..."
+          mvn gatling:test \
+            -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+            -Dperf.users=${{ github.event.inputs.max_users }} \
+            -Dperf.duration=${{ github.event.inputs.duration }} \
+            -Dperf.type=stress
+        continue-on-error: true
+
+      - name: E-commerce API Stress Test
+        id: ecommerce-stress
+        run: |
+          echo "🔥 Running E-commerce API Stress Test..."
+          mvn gatling:test \
+            -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
+            -Dperf.users=${{ github.event.inputs.max_users }}
+        continue-on-error: true
+
+      - name: JUnit Stress Test
+        id: junit-stress
+        run: |
+          echo "🔥 Running JUnit Stress Test..."
+          mvn test -Dtest=WeatherApiPerformanceTest#testForecastEndpointStress \
+            -Dperf.users=${{ github.event.inputs.max_users }}
+        continue-on-error: true
+
+      - name: Analyze Stress Test Results
+        if: always()
+        run: |
+          echo "# 🔥 Stress Test Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Configuration:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Maximum Users: ${{ github.event.inputs.max_users }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Duration: ${{ github.event.inputs.duration }}s" >> $GITHUB_STEP_SUMMARY
+          echo "- Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tests Executed:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Weather API Stress Test" >> $GITHUB_STEP_SUMMARY
+          echo "- E-commerce API Stress Test" >> $GITHUB_STEP_SUMMARY
+          echo "- JUnit Stress Test" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Key Metrics to Review:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Error rate under maximum load" >> $GITHUB_STEP_SUMMARY
+          echo "- Response time degradation" >> $GITHUB_STEP_SUMMARY
+          echo "- System breaking point" >> $GITHUB_STEP_SUMMARY
+          echo "- Recovery after peak load" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Action Items:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download and review detailed reports" >> $GITHUB_STEP_SUMMARY
+          echo "2. Identify bottlenecks and limitations" >> $GITHUB_STEP_SUMMARY
+          echo "3. Plan capacity and scaling strategies" >> $GITHUB_STEP_SUMMARY
+          echo "4. Update infrastructure if needed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Stress Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-test-reports-${{ github.run_number }}
+          path: |
+            target/gatling-results/
+            target/surefire-reports/
+            target/performance-results/
+          retention-days: 60
+
+      - name: Generate Performance Trend Data
+        if: always()
+        run: |
+          mkdir -p stress-test-trends
+          echo "Run: ${{ github.run_number }}" > stress-test-trends/metadata.txt
+          echo "Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> stress-test-trends/metadata.txt
+          echo "Max Users: ${{ github.event.inputs.max_users }}" >> stress-test-trends/metadata.txt
+          echo "Duration: ${{ github.event.inputs.duration }}s" >> stress-test-trends/metadata.txt
+
+      - name: Upload Trend Data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-test-trends-${{ github.run_number }}
+          path: stress-test-trends/
+          retention-days: 365
+
+      - name: Create Summary Report
+        if: always()
+        run: |
+          cat << 'EOF' > stress-test-summary.md
+          # Stress Test Summary Report
+          
+          ## Configuration
+          - **Run Number:** ${{ github.run_number }}
+          - **Max Users:** ${{ github.event.inputs.max_users }}
+          - **Duration:** ${{ github.event.inputs.duration }}s
+          - **Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          
+          ## Results
+          
+          ### Weather API
+          - Stress test completed
+          - Check detailed reports for metrics
+          
+          ### E-commerce API
+          - Stress test completed
+          - Check detailed reports for metrics
+          
+          ### JUnit Tests
+          - Stress test completed
+          - Check CSV reports for metrics
+          
+          ## Recommendations
+          
+          1. Review error rates under peak load
+          2. Analyze response time percentiles
+          3. Identify system breaking points
+          4. Plan for capacity scaling
+          
+          ## Artifacts
+          
+          - Gatling HTML reports (interactive charts)
+          - CSV metrics (trend analysis)
+          - JUnit test results
+          
+          EOF
+          
+          cat stress-test-summary.md
+
+      - name: Post Results Comment (if triggered manually)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const summary = `## 🔥 Stress Test Results
+            
+            **Configuration:**
+            - Max Users: ${{ github.event.inputs.max_users }}
+            - Duration: ${{ github.event.inputs.duration }}s
+            - Run: #${{ github.run_number }}
+            
+            **Status:** Tests completed
+            
+            **Artifacts:** Download from the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            
+            **Next Steps:**
+            1. Review detailed Gatling reports
+            2. Analyze system behavior under stress
+            3. Identify performance bottlenecks
+            4. Update capacity plans if needed`;
+            
+            console.log(summary);
+
+  spike-test:
+    name: Spike Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Add environment variables from secrets
+    env:
+      WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install dependencies
+        run: mvn clean install -DskipTests
+
+      - name: Run Spike Test
+        run: |
+          echo "⚡ Running Spike Test..."
+          mvn gatling:test \
+            -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+            -Dperf.users=${{ github.event.inputs.max_users }} \
+            -Dperf.type=spike
+        continue-on-error: true
+
+      - name: Run JUnit Spike Test
+        run: |
+          mvn test -Dtest=WeatherApiPerformanceTest#testSpikeLoad
+        continue-on-error: true
+
+      - name: Upload Spike Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spike-test-reports-${{ github.run_number }}
+          path: target/gatling-results/
+          retention-days: 30
+
+      - name: Spike Test Summary
+        if: always()
+        run: |
+          echo "# ⚡ Spike Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Details:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Sudden burst of ${{ github.event.inputs.max_users }} users" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests system resilience to traffic spikes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Key Observations:**" >> $GITHUB_STEP_SUMMARY
+          echo "- System recovery time" >> $GITHUB_STEP_SUMMARY
+          echo "- Error handling under spike" >> $GITHUB_STEP_SUMMARY
+          echo "- Auto-scaling behavior (if applicable)" >> $GITHUB_STEP_SUMMARY

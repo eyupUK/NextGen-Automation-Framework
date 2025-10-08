@@ -1,14 +1,4 @@
-# The Insurwave QA Automation Assessment 
-
-The purpose of this assessment is for you to showcase skills and knowledge by showing your approach to writing automation tests.  Use any tools or technology you prefer to complete the task.
- 
-Please include all the good practices that would be normally used during the day-to-day testing practice. Please feel free to use any libraries, or patterns that feel right for you.
-
-Complete as many scenarios as possible, for the next stage interview it is not necessary to complete all four scenarios.
-
-During the interview session, all the completed scenarios will be demoed, reviewed, and discussed. Please make sure you have access to the computer to do the demo by sharing the screen.
-
-For every scenario, please prepare a separate commit/pull-request showing incremental work.
+# QA Automation Tasks
 
 ## Scenario 1: API Automated Testing
 
