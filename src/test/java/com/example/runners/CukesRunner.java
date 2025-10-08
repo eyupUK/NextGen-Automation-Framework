@@ -17,7 +17,6 @@ import org.junit.runner.RunWith;
         /**
          * The {@code plugin} attribute specifies the plugins to be used for generating reports and other artifacts.
          * The following plugins are configured:
-         *
          *     {@code pretty}: Prints the feature file and step definitions to the console.
          *     {@code io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm}: Generates Allure reports.
          *     {@code json:target/cucumber.json}: Generates a JSON report in the specified directory.
@@ -36,7 +35,7 @@ import org.junit.runner.RunWith;
         features = "src/test/resources/features",
         glue = "com/example/steps",
         dryRun = false,
-        tags = ""
+        tags = "@ui"
 )
 public class CukesRunner {
 }

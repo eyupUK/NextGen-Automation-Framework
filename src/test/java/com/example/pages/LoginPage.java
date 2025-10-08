@@ -34,9 +34,9 @@ public class LoginPage extends BasePage {
         return text(errorMsg);
     }
 
-    public void loginAsAStandartUser(String user, String pass) {
+    public void loginAsAStandartUser(String user, String pwd) {
         enterUsername(user);
-        enterPassword(pass);
+        enterPassword(pwd);
         submitLogin();
     }
 

@@ -12,7 +12,9 @@ import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.safari.SafariOptions;
 
+import java.io.File;
 import java.util.HashMap;
+import java.util.UUID;
 
 /**
  * Singleton class to get and manage WebDriver instances for different browsers.
@@ -43,7 +45,11 @@ public class Driver {
                         options.addArguments("--disable-gpu");
                         options.addArguments("--disable-save-password-bubble");
                         options.addArguments("--disable-notifications");
-                        options.addArguments("--incognito");   // or
+                        options.addArguments("--incognito");
+                        // Add unique user data directory to prevent conflicts
+                        String userDataDir = System.getProperty("java.io.tmpdir") + "chrome-test-" + UUID.randomUUID();
+                        options.addArguments("--user-data-dir=" + userDataDir);
+                        options.addArguments("--remote-allow-origins=*");
                         options.setExperimentalOption("prefs", new HashMap<String, Object>() {{
                             put("credentials_enable_service", false);
                             put("profile.password_manager_enabled", false);
@@ -57,7 +63,11 @@ public class Driver {
                         options.addArguments("--disable-gpu");
                         options.addArguments("--disable-save-password-bubble");
                         options.addArguments("--disable-notifications");
-                        options.addArguments("--incognito");   // or
+                        options.addArguments("--incognito");
+                        // Add unique user data directory to prevent conflicts
+                        String userDataDir = System.getProperty("java.io.tmpdir") + "chrome-test-" + UUID.randomUUID();
+                        options.addArguments("--user-data-dir=" + userDataDir);
+                        options.addArguments("--remote-allow-origins=*");
                         options.setExperimentalOption("prefs", new HashMap<String, Object>() {{
                             put("credentials_enable_service", false);
                             put("profile.password_manager_enabled", false);
@@ -66,11 +76,17 @@ public class Driver {
                     }
                     case "chrome-headless" -> {
                         ChromeOptions options = new ChromeOptions();
-                        options.addArguments("headless");
+                        options.addArguments("--headless=new");
                         options.addArguments("--disable-gpu");
                         options.addArguments("--disable-save-password-bubble");
                         options.addArguments("--disable-notifications");
-                        options.addArguments("--incognito");   // or
+                        options.addArguments("--incognito");
+                        // Add unique user data directory to prevent conflicts
+                        String userDataDir = System.getProperty("java.io.tmpdir") + "chrome-test-" + UUID.randomUUID();
+                        options.addArguments("--user-data-dir=" + userDataDir);
+                        options.addArguments("--remote-allow-origins=*");
+                        options.addArguments("--no-sandbox");
+                        options.addArguments("--disable-dev-shm-usage");
                         options.setExperimentalOption("prefs", new HashMap<String, Object>() {{
                             put("credentials_enable_service", false);
                             put("profile.password_manager_enabled", false);

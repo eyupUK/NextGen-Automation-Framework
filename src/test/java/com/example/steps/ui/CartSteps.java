@@ -20,6 +20,7 @@ public class CartSteps {
 
     @Given("I am logged in as a standard user")
     public void i_am_logged_in_as_standard_user() {
+        login.open();
         login.loginAsAStandartUser(username, password);
         Assert.assertTrue("Login failed; products page not loaded.", inventory.isLoaded());
     }
