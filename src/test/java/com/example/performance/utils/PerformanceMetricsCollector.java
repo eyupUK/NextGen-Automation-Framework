@@ -155,19 +155,43 @@ public class PerformanceMetricsCollector {
         System.out.println();
     }
 
+//    public void exportToCSV(String path) {
+//        PerformanceReport r = getReport();
+//        try (BufferedWriter bw = new BufferedWriter(new FileWriter(path))) {
+//            bw.write("name,totalRequests,successCount,errorCount,errorRate,meanMs,medianMs,p95Ms,p99Ms,maxMs,active\n");
+//            bw.write(String.format(
+//                    Locale.ROOT,
+//                    "%s,%d,%d,%d,%.4f,%.3f,%.3f,%.3f,%.3f,%.3f,%d%n",
+//                    r.name, r.totalRequests, r.successCount, r.errorCount, r.errorRate,
+//                    r.meanResponseTime, r.medianResponseTime, r.p95ResponseTime, r.p99ResponseTime,
+//                    r.maxResponseTime, r.activeRequests
+//            ));
+//        } catch (IOException e) {
+//            System.err.println("CSV export failed: " + e.getMessage());
+//        }
+//    }
+
     public void exportToCSV(String path) {
         PerformanceReport r = getReport();
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(path))) {
-            bw.write("name,totalRequests,successCount,errorCount,errorRate,meanMs,medianMs,p95Ms,p99Ms,maxMs,active\n");
-            bw.write(String.format(
-                    Locale.ROOT,
-                    "%s,%d,%d,%d,%.4f,%.3f,%.3f,%.3f,%.3f,%.3f,%d%n",
-                    r.name, r.totalRequests, r.successCount, r.errorCount, r.errorRate,
-                    r.meanResponseTime, r.medianResponseTime, r.p95ResponseTime, r.p99ResponseTime,
-                    r.maxResponseTime, r.activeRequests
-            ));
-        } catch (IOException e) {
+        java.nio.file.Path p = java.nio.file.Paths.get(path);
+        try {
+            java.nio.file.Path parent = p.getParent();
+            if (parent != null) {
+                java.nio.file.Files.createDirectories(parent); // <-- ensure dir exists
+            }
+            try (java.io.BufferedWriter bw = new java.io.BufferedWriter(new java.io.FileWriter(p.toFile()))) {
+                bw.write("name,totalRequests,successCount,errorCount,errorRate,meanMs,medianMs,p95Ms,p99Ms,maxMs,active\n");
+                bw.write(String.format(
+                        java.util.Locale.ROOT,
+                        "%s,%d,%d,%d,%.4f,%.3f,%.3f,%.3f,%.3f,%.3f,%d%n",
+                        r.name, r.totalRequests, r.successCount, r.errorCount, r.errorRate,
+                        r.meanResponseTime, r.medianResponseTime, r.p95ResponseTime, r.p99ResponseTime,
+                        r.maxResponseTime, r.activeRequests
+                ));
+            }
+        } catch (Exception e) {
             System.err.println("CSV export failed: " + e.getMessage());
         }
     }
+
 }

@@ -168,6 +168,9 @@ jobs:
       - name: Install dependencies
         run: mvn -B -ntp clean install -DskipTests
 
+      - name: Prepare performance results folder
+        run: mkdir -p target/performance-results
+
       - name: Run JUnit Performance Tests
         run: mvn -B -ntp test -Dtest=WeatherApiPerformanceTest -Dsla.p95.ms=2000 -Dsla.p99.ms=4000 -Dsla.successRate=95
         continue-on-error: true
