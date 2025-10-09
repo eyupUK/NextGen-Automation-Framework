@@ -24,8 +24,8 @@ on:
         type: choice
         options: [weather, ecommerce, all]
 
-  push:
-    branches: [ main, master ]
+#  push:
+#    branches: [ main, master ]
 
 jobs:
   gatling-performance-tests:
