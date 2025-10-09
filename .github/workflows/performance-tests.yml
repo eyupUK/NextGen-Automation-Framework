@@ -65,6 +65,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      # 🔑 Recompile tests/simulations for JDK 17 so Gatling can load them
+      - name: Recompile tests for JDK 17 (Gatling)
+        run: |
+          mvn -B -ntp clean test-compile \
+            -DskipTests \
+            -Dmaven.compiler.testRelease=17
+
       - name: Set test parameters
         id: test-params
         run: |
@@ -162,7 +169,7 @@ jobs:
         run: mvn -B -ntp clean install -DskipTests
 
       - name: Run JUnit Performance Tests
-        run: mvn -B -ntp test -Dtest=WeatherApiPerformanceTest -Dperf.users=5
+        run: mvn -B -ntp test -Dtest=WeatherApiPerformanceTest -Dsla.p95.ms=2000 -Dsla.p99.ms=4000 -Dsla.successRate=95
         continue-on-error: true
 
       - name: Upload Test Results
