@@ -1,9 +1,9 @@
 name: Nightly Performance Tests
 
 on:
-#  schedule:
-    # Run every night at 2 AM UTC
-#    - cron: '0 2 * * *'
+  #  schedule:
+  # Run every night at 2 AM UTC
+  #    - cron: '0 2 * * *'
   push:
     branches: [ main ]
 
@@ -20,7 +20,6 @@ jobs:
     name: Nightly Load Test
     runs-on: ubuntu-latest
 
-    # Add environment variables from secrets
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
@@ -28,19 +27,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
+      # Build/install with Java 21
+      - name: Set up Java 21 (build)
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Install dependencies
-        run: mvn clean install -DskipTests
+      - name: Install dependencies (no tests)
+        run: mvn -B -ntp clean install -DskipTests
+
+      # Switch to Java 17 ONLY for Gatling
+      - name: Set up Java 17 (Gatling)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
       - name: Run Weather API Load Test
         run: |
-          mvn gatling:test \
+          mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=20 \
             -Dperf.rampup=30 \
@@ -49,7 +56,7 @@ jobs:
 
       - name: Run E-commerce API Load Test
         run: |
-          mvn gatling:test \
+          mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=15 \
             -Dperf.rampup=20

@@ -19,16 +19,14 @@ on:
         default: false
         type: boolean
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
+
 jobs:
   stress-test:
     name: API Stress Testing
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    # Add environment variables from secrets
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
@@ -36,21 +34,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
+      # Build/install with Java 21
+      - name: Set up Java 21 (build)
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Install dependencies
-        run: mvn clean install -DskipTests
+      - name: Install dependencies (no tests)
+        run: mvn -B -ntp clean install -DskipTests
+
+      # Switch to Java 17 ONLY for Gatling executions
+      - name: Set up Java 17 (Gatling)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
       - name: Weather API Stress Test
         id: weather-stress
         run: |
           echo "🔥 Running Weather API Stress Test..."
-          mvn gatling:test \
+          mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ github.event.inputs.max_users }} \
             -Dperf.duration=${{ github.event.inputs.duration }} \
@@ -61,16 +67,17 @@ jobs:
         id: ecommerce-stress
         run: |
           echo "🔥 Running E-commerce API Stress Test..."
-          mvn gatling:test \
+          mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=${{ github.event.inputs.max_users }}
         continue-on-error: true
 
+      # (JUnit can stay on Java 17 or switch back to 21 if you prefer; 17 is fine)
       - name: JUnit Stress Test
         id: junit-stress
         run: |
           echo "🔥 Running JUnit Stress Test..."
-          mvn test -Dtest=WeatherApiPerformanceTest#testForecastEndpointStress \
+          mvn -B -ntp test -Dtest=WeatherApiPerformanceTest#testForecastEndpointStress \
             -Dperf.users=${{ github.event.inputs.max_users }}
         continue-on-error: true
 
@@ -201,7 +208,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    # Add environment variables from secrets
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
@@ -209,28 +215,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
+      # Build/install with Java 21
+      - name: Set up Java 21 (build)
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Install dependencies
-        run: mvn clean install -DskipTests
+      - name: Install dependencies (no tests)
+        run: mvn -B -ntp clean install -DskipTests
+
+      # Switch to Java 17 ONLY for Gatling
+      - name: Set up Java 17 (Gatling)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
       - name: Run Spike Test
         run: |
           echo "⚡ Running Spike Test..."
-          mvn gatling:test \
+          mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ github.event.inputs.max_users }} \
             -Dperf.type=spike
         continue-on-error: true
 
+      # (JUnit on 17 is fine here too)
       - name: Run JUnit Spike Test
         run: |
-          mvn test -Dtest=WeatherApiPerformanceTest#testSpikeLoad
+          mvn -B -ntp test -Dtest=WeatherApiPerformanceTest#testSpikeLoad
         continue-on-error: true
 
       - name: Upload Spike Test Reports

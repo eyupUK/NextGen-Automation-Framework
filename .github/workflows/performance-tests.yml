@@ -1,7 +1,6 @@
 name: Performance Tests
 
 on:
-  # Run on manual trigger
   workflow_dispatch:
     inputs:
       test_type:
@@ -9,10 +8,7 @@ on:
         required: true
         default: 'load'
         type: choice
-        options:
-          - load
-          - stress
-          - spike
+        options: [load, stress, spike]
       users:
         description: 'Number of concurrent users'
         required: false
@@ -26,27 +22,16 @@ on:
         required: true
         default: 'weather'
         type: choice
-        options:
-          - weather
-          - ecommerce
-          - all
+        options: [weather, ecommerce, all]
 
-  # Run on schedule (weekly on Sundays at 2 AM)
-#  schedule:
-#    - cron: '0 2 * * 0'
-
-  # Run on push to main/master (optional - comment out if not needed)
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
 
 jobs:
   gatling-performance-tests:
     name: Gatling Performance Tests
     runs-on: ubuntu-latest
 
-    # Add environment variables from secrets
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
@@ -54,7 +39,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      # Build/install with Java 21
+      - name: Set up Java 21 (build)
         uses: actions/setup-java@v4
         with:
           java-version: '21'
@@ -69,8 +55,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Install dependencies
-        run: mvn clean install -DskipTests
+      - name: Install dependencies (no tests)
+        run: mvn -B -ntp clean install -DskipTests
+
+      # Switch to Java 17 ONLY for Gatling runs
+      - name: Set up Java 17 (Gatling)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
       - name: Set test parameters
         id: test-params
@@ -90,7 +83,7 @@ jobs:
       - name: Run Weather API Performance Test
         if: env.SIMULATION == 'weather' || env.SIMULATION == 'all'
         run: |
-          mvn gatling:test \
+          mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ env.USERS }} \
             -Dperf.duration=${{ env.DURATION }} \
@@ -100,7 +93,7 @@ jobs:
       - name: Run E-commerce API Performance Test
         if: env.SIMULATION == 'ecommerce' || env.SIMULATION == 'all'
         run: |
-          mvn gatling:test \
+          mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=${{ env.USERS }}
         continue-on-error: true
@@ -143,8 +136,6 @@ jobs:
   junit-performance-tests:
     name: JUnit Performance Tests
     runs-on: ubuntu-latest
-
-    # Add environment variables from secrets
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
@@ -168,10 +159,10 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Install dependencies
-        run: mvn clean install -DskipTests
+        run: mvn -B -ntp clean install -DskipTests
 
       - name: Run JUnit Performance Tests
-        run: mvn test -Dtest=WeatherApiPerformanceTest -Dperf.users=5
+        run: mvn -B -ntp test -Dtest=WeatherApiPerformanceTest -Dperf.users=5
         continue-on-error: true
 
       - name: Upload Test Results
@@ -226,4 +217,3 @@ jobs:
           echo "- 📊 Gatling HTML Reports (interactive charts)" >> $GITHUB_STEP_SUMMARY
           echo "- 📈 CSV Metrics (for trend analysis)" >> $GITHUB_STEP_SUMMARY
           echo "- 📝 Test Results (detailed logs)" >> $GITHUB_STEP_SUMMARY
-
