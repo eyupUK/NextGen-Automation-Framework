@@ -37,13 +37,17 @@ public class WeatherApiPerformanceTest {
 
     @After
     public void tearDown() throws Exception {
-        executorService.shutdown();
-        if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
-            executorService.shutdownNow();
+        if (executorService != null) {
+            executorService.shutdown();
+            if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                executorService.shutdownNow();
+            }
         }
 
-        metricsCollector.printReport();
-        metricsCollector.exportToCSV("target/performance-results/weather-api-metrics.csv");
+        if (metricsCollector != null) {
+            metricsCollector.printReport();
+            metricsCollector.exportToCSV("target/performance-results/weather-api-metrics.csv");
+        }
     }
 
     /**
@@ -260,4 +264,3 @@ public class WeatherApiPerformanceTest {
                 ));
     }
 }
-

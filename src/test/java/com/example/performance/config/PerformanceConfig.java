@@ -12,10 +12,22 @@ public class PerformanceConfig {
     public static final String WEATHER_API_BASE_URL = ConfigurationReader.get("weather_api_base_url");
     public static final String FAKESTORE_API_BASE_URL = ConfigurationReader.get("fakestore_api_base_url");
 
-    // Performance Test Parameters (can be overridden via system properties)
-    public static final int USERS = Integer.parseInt(System.getProperty("perf.users", "10"));
-    public static final int RAMP_UP_TIME = Integer.parseInt(System.getProperty("perf.rampup", "10"));
-    public static final int DURATION = Integer.parseInt(System.getProperty("perf.duration", "60"));
+    private static int getIntOrDefault(String key, int defaultVal) {
+        String val = ConfigurationReader.get(key);
+        if (val == null || val.isBlank()) {
+            return defaultVal;
+        }
+        try {
+            return Integer.parseInt(val.trim());
+        } catch (NumberFormatException e) {
+            return defaultVal;
+        }
+    }
+
+    // Performance Test Parameters (can be overridden via env or system properties)
+    public static final int USERS = getIntOrDefault("perf.users", 10);
+    public static final int RAMP_UP_TIME = getIntOrDefault("perf.rampup", 10);
+    public static final int DURATION = getIntOrDefault("perf.duration", 60);
 
     // SLA Thresholds (in milliseconds)
     public static final int RESPONSE_TIME_P95_THRESHOLD = 2000; // 95th percentile

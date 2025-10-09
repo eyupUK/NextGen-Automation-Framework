@@ -64,8 +64,8 @@ jobs:
           echo "🔥 Running Weather API Stress Test..."
           mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
-            -Dperf.users=${{ github.event.inputs.max_users }} \
-            -Dperf.duration=${{ github.event.inputs.duration }} \
+            -Dperf.users=${{ github.event.inputs.max_users || '100' }} \
+            -Dperf.duration=${{ github.event.inputs.duration || '180' }} \
             -Dperf.type=stress
         continue-on-error: true
 
@@ -75,7 +75,7 @@ jobs:
           echo "🔥 Running E-commerce API Stress Test..."
           mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
-            -Dperf.users=${{ github.event.inputs.max_users }}
+            -Dperf.users=${{ github.event.inputs.max_users || '100' }}
         continue-on-error: true
 
 
@@ -92,7 +92,7 @@ jobs:
         run: |
           echo "🔥 Running JUnit Stress Test..."
           mvn -B -ntp test -Dtest=WeatherApiPerformanceTest#testForecastEndpointStress \
-            -Dperf.users=${{ github.event.inputs.max_users }}
+            -Dperf.users=${{ github.event.inputs.max_users || '100' }}
         continue-on-error: true
 
       - name: Analyze Stress Test Results
@@ -101,8 +101,8 @@ jobs:
           echo "# 🔥 Stress Test Analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Test Configuration:**" >> $GITHUB_STEP_SUMMARY
-          echo "- Maximum Users: ${{ github.event.inputs.max_users }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Duration: ${{ github.event.inputs.duration }}s" >> $GITHUB_STEP_SUMMARY
+          echo "- Maximum Users: ${{ github.event.inputs.max_users || '100' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Duration: ${{ github.event.inputs.duration || '180' }}s" >> $GITHUB_STEP_SUMMARY
           echo "- Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Tests Executed:**" >> $GITHUB_STEP_SUMMARY
@@ -139,8 +139,8 @@ jobs:
           mkdir -p stress-test-trends
           echo "Run: ${{ github.run_number }}" > stress-test-trends/metadata.txt
           echo "Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> stress-test-trends/metadata.txt
-          echo "Max Users: ${{ github.event.inputs.max_users }}" >> stress-test-trends/metadata.txt
-          echo "Duration: ${{ github.event.inputs.duration }}s" >> stress-test-trends/metadata.txt
+          echo "Max Users: ${{ github.event.inputs.max_users || '100' }}" >> stress-test-trends/metadata.txt
+          echo "Duration: ${{ github.event.inputs.duration || '180' }}s" >> stress-test-trends/metadata.txt
 
       - name: Upload Trend Data
         if: always()
@@ -158,8 +158,8 @@ jobs:
           
           ## Configuration
           - **Run Number:** ${{ github.run_number }}
-          - **Max Users:** ${{ github.event.inputs.max_users }}
-          - **Duration:** ${{ github.event.inputs.duration }}s
+          - **Max Users:** ${{ github.event.inputs.max_users || '100' }}
+          - **Duration:** ${{ github.event.inputs.duration || '180' }}s
           - **Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
           
           ## Results
@@ -256,7 +256,7 @@ jobs:
           echo "⚡ Running Spike Test..."
           mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
-            -Dperf.users=${{ github.event.inputs.max_users }} \
+            -Dperf.users=${{ github.event.inputs.max_users || '100' }} \
             -Dperf.type=spike
         continue-on-error: true
 
