@@ -54,7 +54,9 @@ jobs:
 
       - name: Recompile tests for JDK 17 (Gatling)
         run: |
-          mvn -B -ntp clean test-compile -DskipTests
+          mvn -B -ntp clean test-compile \
+            -DskipTests \
+            -Dmaven.compiler.testRelease=17
 
       - name: Weather API Stress Test
         id: weather-stress
