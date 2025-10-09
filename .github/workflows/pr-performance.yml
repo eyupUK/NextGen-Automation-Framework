@@ -8,6 +8,11 @@ on:
       - 'pom.xml'
       - '.github/workflows/pr-performance.yml'
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   quick-performance-check:
     name: Quick Performance Check
@@ -72,6 +77,7 @@ jobs:
         if: always()
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const comment = [
               '## 🎯 Performance Test Results',

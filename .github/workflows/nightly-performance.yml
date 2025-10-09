@@ -15,6 +15,11 @@ on:
         default: 'true'
         type: boolean
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   nightly-load-test:
     name: Nightly Load Test
@@ -118,6 +123,7 @@ jobs:
         if: failure() && github.event.inputs.notify_on_failure != 'false'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issue = await github.rest.issues.create({
               owner: context.repo.owner,
