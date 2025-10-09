@@ -13,13 +13,14 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <restassured.version>5.5.6</restassured.version>
         <cucumber.version>6.11.0</cucumber.version>
-        <selenium.version>4.18.1</selenium.version>
+        <selenium.version>4.25.0</selenium.version>
         <junit.version>4.13.2</junit.version>
         <opencsv.version>5.12.0</opencsv.version>
         <jackson.version>2.20.0</jackson.version>
         <!-- Align Gatling libs with Maven plugin to avoid CLI arg mismatch -->
         <gatling.version>3.9.5</gatling.version>
         <gatling-maven-plugin.version>4.8.2</gatling-maven-plugin.version>
+        <axe.version>4.10.2</axe.version>
     </properties>
     <build>
         <plugins>
@@ -35,6 +36,7 @@
                     <includes>
                         <include>**/CukesRunner.java</include>
                         <include>**/FailedTestRunner.java</include>
+                        <include>**/AccessibilityRunner.java</include>
                     </includes>
                     <systemPropertyVariables>
                         <!-- Headless mode toggle: -Dheadless=true -->
@@ -128,6 +130,13 @@
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
             <version>${selenium.version}</version>
+        </dependency>
+        <!-- Explicit DevTools matching installed Chrome (141) to reduce CDP warnings -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-devtools-v141</artifactId>
+            <version>${selenium.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
@@ -246,6 +255,14 @@
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-core</artifactId>
             <version>4.2.25</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Accessibility: axe-core selenium integration -->
+        <dependency>
+            <groupId>com.deque.html.axe-core</groupId>
+            <artifactId>selenium</artifactId>
+            <version>${axe.version}</version>
             <scope>test</scope>
         </dependency>
 

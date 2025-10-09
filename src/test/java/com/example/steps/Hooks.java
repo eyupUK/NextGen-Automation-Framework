@@ -10,6 +10,10 @@ import org.openqa.selenium.WebDriver;
 
 public class Hooks {
 
+    // Provide access to current Scenario without adding parameters to steps
+    private static final ThreadLocal<Scenario> CURRENT_SCENARIO = new ThreadLocal<>();
+    public static Scenario getScenario() { return CURRENT_SCENARIO.get(); }
+
     /**
      * Private static WebDriver instance to hold the driver instance.
      */
@@ -21,6 +25,7 @@ public class Hooks {
      */
     @Before()
     public void setUp(Scenario scenario) {
+        CURRENT_SCENARIO.set(scenario);
         boolean isApi = scenario.getSourceTagNames().contains("@api");
         if (!isApi) {
             driver = Driver.get();
@@ -50,5 +55,6 @@ public class Hooks {
             }
             Driver.closeDriver();
         }
+        CURRENT_SCENARIO.remove();
     }
 }
