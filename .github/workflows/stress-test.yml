@@ -52,6 +52,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Recompile tests for JDK 17 (Gatling)
+        run: |
+          mvn -B -ntp clean test-compile -DskipTests
+
       - name: Weather API Stress Test
         id: weather-stress
         run: |
@@ -72,7 +76,15 @@ jobs:
             -Dperf.users=${{ github.event.inputs.max_users }}
         continue-on-error: true
 
+
       # (JUnit can stay on Java 17 or switch back to 21 if you prefer; 17 is fine)
+      # (JUnit should run on Java 21 because the project was compiled with 21)
+      - name: Set up Java 21 (JUnit)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
       - name: JUnit Stress Test
         id: junit-stress
         run: |
@@ -233,6 +245,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      # Recompile test sources for JDK 17 so Gatling can load them
+      - name: Recompile tests for JDK 17 (Gatling)
+        run: mvn -B -ntp clean test-compile -DskipTests
+
       - name: Run Spike Test
         run: |
           echo "⚡ Running Spike Test..."
@@ -242,7 +258,13 @@ jobs:
             -Dperf.type=spike
         continue-on-error: true
 
-      # (JUnit on 17 is fine here too)
+      # Switch back to Java 21 for JUnit (main classes were built for 21)
+      - name: Set up Java 21 (JUnit)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
       - name: Run JUnit Spike Test
         run: |
           mvn -B -ntp test -Dtest=WeatherApiPerformanceTest#testSpikeLoad
@@ -269,3 +291,4 @@ jobs:
           echo "- System recovery time" >> $GITHUB_STEP_SUMMARY
           echo "- Error handling under spike" >> $GITHUB_STEP_SUMMARY
           echo "- Auto-scaling behavior (if applicable)" >> $GITHUB_STEP_SUMMARY
+
