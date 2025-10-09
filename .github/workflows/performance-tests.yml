@@ -36,10 +36,10 @@ on:
 #    - cron: '0 2 * * 0'
 
   # Run on push to main/master (optional - comment out if not needed)
-  # push:
-  #   branches:
-  #     - main
-  #     - master
+  push:
+    branches:
+      - main
+      - master
 
 jobs:
   gatling-performance-tests:

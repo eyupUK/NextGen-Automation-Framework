@@ -18,7 +18,10 @@ on:
         required: false
         default: false
         type: boolean
-
+  push:
+    branches:
+      - main
+      - master
 jobs:
   stress-test:
     name: API Stress Testing
