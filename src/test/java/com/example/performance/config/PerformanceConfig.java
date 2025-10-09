@@ -10,7 +10,6 @@ public class PerformanceConfig {
 
     // Load from configuration.properties
     public static final String WEATHER_API_BASE_URL = ConfigurationReader.get("weather_api_base_url");
-    public static final String WEATHER_API_KEY = ConfigurationReader.get("WEATHER_API_KEY");
     public static final String FAKESTORE_API_BASE_URL = ConfigurationReader.get("fakestore_api_base_url");
 
     // Performance Test Parameters (can be overridden via system properties)
@@ -27,8 +26,26 @@ public class PerformanceConfig {
     public static final int SPIKE_USERS = 50;
     public static final int STRESS_USERS = 100;
 
+    /**
+     * Get Weather API Key - evaluated at runtime to ensure environment variables are loaded
+     */
+    public static String getWeatherApiKey() {
+        String key = ConfigurationReader.get("WEATHER_API_KEY");
+        if (key == null || key.isEmpty()) {
+            throw new IllegalStateException("WEATHER_API_KEY is not set. Please set it as an environment variable or system property.");
+        }
+        return key;
+    }
+
+    // Backward compatibility - deprecated, use getWeatherApiKey() instead
+    @Deprecated
+    public static final String WEATHER_API_KEY = System.getenv("WEATHER_API_KEY") != null ?
+        System.getenv("WEATHER_API_KEY") :
+        (System.getProperty("WEATHER_API_KEY") != null ?
+            System.getProperty("WEATHER_API_KEY") :
+            "");
+
     private PerformanceConfig() {
         // Utility class
     }
 }
-

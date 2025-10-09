@@ -26,6 +26,9 @@ import static io.gatling.javaapi.http.HttpDsl.*;
  */
 public class WeatherApiPerformanceSimulation extends Simulation {
 
+    // Get API key at runtime
+    private static final String API_KEY = PerformanceConfig.getWeatherApiKey();
+
     // HTTP Protocol Configuration
     private final HttpProtocolBuilder httpProtocol = http
             .baseUrl(PerformanceConfig.WEATHER_API_BASE_URL)
@@ -38,7 +41,7 @@ public class WeatherApiPerformanceSimulation extends Simulation {
             .exec(
                     http("Get Current Weather - London")
                             .get("/current.json")
-                            .queryParam("key", PerformanceConfig.WEATHER_API_KEY)
+                            .queryParam("key", API_KEY)
                             .queryParam("q", "London")
                             .check(status().is(200))
                             .check(jsonPath("$.location.name").exists())
@@ -48,7 +51,7 @@ public class WeatherApiPerformanceSimulation extends Simulation {
             .exec(
                     http("Get Current Weather - New York")
                             .get("/current.json")
-                            .queryParam("key", PerformanceConfig.WEATHER_API_KEY)
+                            .queryParam("key", API_KEY)
                             .queryParam("q", "New York")
                             .check(status().is(200))
                             .check(jsonPath("$.location.name").exists())
@@ -57,7 +60,7 @@ public class WeatherApiPerformanceSimulation extends Simulation {
             .exec(
                     http("Get Current Weather - Tokyo")
                             .get("/current.json")
-                            .queryParam("key", PerformanceConfig.WEATHER_API_KEY)
+                            .queryParam("key", API_KEY)
                             .queryParam("q", "Tokyo")
                             .check(status().is(200))
                             .check(jsonPath("$.location.name").exists())
@@ -68,7 +71,7 @@ public class WeatherApiPerformanceSimulation extends Simulation {
             .exec(
                     http("Get 3-Day Forecast - Paris")
                             .get("/forecast.json")
-                            .queryParam("key", PerformanceConfig.WEATHER_API_KEY)
+                            .queryParam("key", API_KEY)
                             .queryParam("q", "Paris")
                             .queryParam("days", "3")
                             .check(status().is(200))
@@ -123,4 +126,3 @@ public class WeatherApiPerformanceSimulation extends Simulation {
                 );
     }
 }
-
