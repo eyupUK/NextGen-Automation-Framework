@@ -50,6 +50,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Recompile tests for JDK 17 (Gatling)
+        run: mvn -B -ntp clean test-compile -DskipTests -Dmaven.compiler.testRelease=17
+
       - name: Run Weather API Load Test
         run: |
           mvn -B -ntp gatling:test \

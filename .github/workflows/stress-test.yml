@@ -249,7 +249,7 @@ jobs:
 
       # Recompile test sources for JDK 17 so Gatling can load them
       - name: Recompile tests for JDK 17 (Gatling)
-        run: mvn -B -ntp clean test-compile -DskipTests
+        run: mvn -B -ntp clean test-compile -DskipTests -Dmaven.compiler.testRelease=17
 
       - name: Run Spike Test
         run: |
