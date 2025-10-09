@@ -97,40 +97,52 @@ public class Driver {
     private static ChromeOptions buildChromeOptions(boolean headless) {
         ChromeOptions options = new ChromeOptions();
 
+        // Collect args so we can log them without calling non-existent getters
+        java.util.List<String> args = new java.util.ArrayList<>();
+
         if (headless) {
-            options.addArguments("--headless=new");
+            args.add("--headless=new");
         }
 
-        options.addArguments(
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-gpu",
-                "--disable-notifications",
-                "--disable-save-password-bubble",
-                "--incognito"
-        );
+        // CI-friendly flags for Linux runners
+        args.add("--no-sandbox");
+        args.add("--disable-dev-shm-usage");
+        args.add("--disable-gpu");
+        args.add("--disable-notifications");
+        args.add("--disable-save-password-bubble");
+        args.add("--incognito");
 
-        Map<String, Object> prefs = new HashMap<>();
+        // Unique profile dir per session to avoid "user data directory is already in use"
+        String baseUserDataDir = System.getProperty("chrome.userDataDir",
+                System.getProperty("java.io.tmpdir"));
+        java.nio.file.Path uniqueProfile =
+                java.nio.file.Path.of(baseUserDataDir, "chrome-profile-" + java.util.UUID.randomUUID());
+        try {
+            java.nio.file.Files.createDirectories(uniqueProfile);
+        } catch (Exception ignored) {}
+        args.add("--user-data-dir=" + uniqueProfile.toAbsolutePath());
+
+        // Apply all args at once
+        options.addArguments(args);
+
+        // Disable password manager UI
+        java.util.Map<String, Object> prefs = new java.util.HashMap<>();
         prefs.put("credentials_enable_service", false);
         prefs.put("profile.password_manager_enabled", false);
         options.setExperimentalOption("prefs", prefs);
 
-        // Base directory (from CI step), default to system temp.
-        String baseUserDataDir = System.getProperty("chrome.userDataDir", System.getProperty("java.io.tmpdir"));
-        Path uniqueProfile = Path.of(baseUserDataDir, "chrome-profile-" + UUID.randomUUID());
-        try { Files.createDirectories(uniqueProfile); } catch (Exception ignored) {}
-        options.addArguments("--user-data-dir=" + uniqueProfile.toAbsolutePath());
-
+        // Optional: override Chrome binary via -Dchrome.binary=/path/to/chrome
         String chromeBinary = System.getProperty("chrome.binary");
         if (chromeBinary != null && !chromeBinary.isBlank()) {
             options.setBinary(chromeBinary);
         }
 
-        // ----- LOG so we can verify in CI logs -----
+        // ---- Log for CI verification ----
         System.out.println("[Driver] Browser=chrome, headless=" + headless);
         System.out.println("[Driver] user-data-dir=" + uniqueProfile.toAbsolutePath());
-        System.out.println("[Driver] Chrome args=" + options.getExperimentalOption("args"));
+        System.out.println("[Driver] Chrome args=" + args);
 
         return options;
     }
+
 }
