@@ -4,6 +4,18 @@ Feature: Accessibility testing for SauceDemo
   I want to ensure key pages of SauceDemo meet accessibility standards
   So that users with disabilities can use the site effectively
 
+  # Acceptance Criteria
+  # - Axe scan reports zero Serious or Critical violations on: Login, Inventory, Cart, Checkout (Info/Overview/Complete), and Login error state.
+  # - Pages under test load successfully (HTTP 200) before scanning.
+  # - Scans are executed after the page is visually ready (post navigation and key DOM actions).
+  # - Report artifacts are generated (Allure and cucumber HTML/JSON) for audit.
+  #
+  # Technical Requirements
+  # - Use axe-core Selenium integration (version aligned in pom) and Chrome with stable driver.
+  # - Public site https://www.saucedemo.com is reachable from the test environment.
+  # - Headless run is supported via configuration if desired.
+  # - Allure output goes to target/allure-results; historical root-level allure-results is ignored by .gitignore.
+
   @login
   Scenario: Login page has no serious or critical accessibility violations
     Given I open the SauceDemo login page

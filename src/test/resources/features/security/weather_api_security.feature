@@ -1,5 +1,25 @@
 @security @api
 Feature: Weather API security checks
+
+  As a security-conscious API tester
+  I want to verify authentication, injection resilience, and security headers
+  So that consumers are protected and best practices are enforced
+
+  # Acceptance Criteria
+  # - Requests without a valid API key do not return HTTP 200 and provide an error payload with code and message.
+  # - Injection-like payloads (SQL/JS/control characters/emojis) do not cause server errors (no 5xx).
+  # - Responses expose baseline security headers (e.g., X-Content-Type-Options=nosniff; HSTS when applicable).
+  # - CORS preflight honors allowed origins/methods/headers and does not echo disallowed origins.
+  # - Rapid requests eventually yield 429 with Retry-After, and retrying after the duration succeeds.
+  # - All schema validations (where applicable) pass for error payloads.
+  #
+  # Technical Requirements
+  # - Weather API base URL and API key are provided via configuration (env/system properties).
+  # - HTTPS endpoints are used; secrets are not logged or committed.
+  # - CORS preflight tests can send OPTIONS requests with custom headers.
+  # - JSON schema files are available under src/test/resources/schemas/.
+  # - Rate limiting respected in tests (add waits/backoff when necessary).
+
   Ensure the Weather API enforces authentication, resists simple injection attempts, and returns security headers.
 
   Background:
@@ -20,7 +40,7 @@ Feature: Weather API security checks
       | <script>alert(1)</script>   |
       | London; DROP TABLE users;   |
       | %27%20OR%201=1--            |
-      | 🙂                           |
+      | \ud83d\ude42                           |
 
   @requires_key
   Scenario: API response exposes basic security headers

@@ -21,6 +21,8 @@
         <gatling.version>3.9.5</gatling.version>
         <gatling-maven-plugin.version>4.8.2</gatling-maven-plugin.version>
         <axe.version>4.10.2</axe.version>
+        <!-- Allow CI tag selection; empty by default -->
+        <cucumber.filter.tags></cucumber.filter.tags>
     </properties>
     <build>
         <plugins>
@@ -42,6 +44,8 @@
                     <systemPropertyVariables>
                         <!-- Headless mode toggle: -Dheadless=true -->
 <!--                        <headless>${headless}</headless>-->
+                        <!-- CI tag selection: override with -Dcucumber.filter.tags=@jwt or via profile -->
+                        <cucumber.filter.tags>${cucumber.filter.tags}</cucumber.filter.tags>
                     </systemPropertyVariables>
                     <!-- Exclude performance tests from regular test runs -->
                     <excludes>
@@ -196,7 +200,7 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.9.0</version>
+            <version>2.10.1</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.rest-assured/json-schema-validator -->
@@ -268,5 +272,20 @@
         </dependency>
 
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>jwt-only</id>
+            <properties>
+                <cucumber.filter.tags>@jwt</cucumber.filter.tags>
+            </properties>
+        </profile>
+        <profile>
+            <id>jwt-negative</id>
+            <properties>
+                <cucumber.filter.tags>@jwt and @negative</cucumber.filter.tags>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>

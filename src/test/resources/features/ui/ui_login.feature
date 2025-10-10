@@ -5,6 +5,18 @@ Feature: Login
   I want to login
   So that I can view products
 
+  # Acceptance Criteria
+  # - Successful login with valid credentials navigates to the products page.
+  # - Invalid credentials display an error message matching the scenario examples.
+  # - Login page loads successfully before actions and elements are interactable.
+  # - Error state is visible on failure and does not persist after a successful login.
+  #
+  # Technical Requirements
+  # - SauceDemo base URL is configured and reachable from the test environment.
+  # - Standard/locked-out credentials provided via configuration variables.
+  # - Chrome WebDriver (headed/headless) is used with a compatible driver version.
+  # - Stable selectors are used for username, password, login button, and error message elements.
+
   Background:
     Given I am on the SauceDemo login page
 
