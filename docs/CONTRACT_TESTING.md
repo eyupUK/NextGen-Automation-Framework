@@ -30,14 +30,21 @@ This repo already declares the Pact consumer dependency:
 If you wish to upgrade Pact later, bump the version in `pom.xml` after reviewing the Pact JVM release notes.
 
 ## Running consumer Pact tests
-Use the dedicated Maven profile that focuses on Pact tests (includes `**/*PactTest.java`).
+Note: run these commands from the project root (the folder that contains `pom.xml`), not from `docs/`.
+Lines starting with `#` are comments; don’t paste them into your terminal.
 
 ```bash
 # Run all Pact tests
 mvn -Pcontract test
 
+# Or, using the Maven Wrapper
+./mvnw -Pcontract test
+
 # Run only the Weather API consumer pact test
 mvn -Pcontract -Dtest=WeatherApiConsumerPactTest test
+
+# Or with the Maven Wrapper
+./mvnw -Pcontract -Dtest=WeatherApiConsumerPactTest test
 ```
 
 After a successful run, pact files are written to:
@@ -108,6 +115,6 @@ pact-broker publish target/pacts \
 ```
 
 ## Troubleshooting
-- If tests don’t run, ensure you used the `-Pcontract` profile or targeted the test with `-Dtest=...`.
+- If tests don’t run, ensure you used the `-Pcontract` profile and that you’re in the project root.
 - If dependencies fail to resolve, check your Maven settings or run once on a connected machine to warm the cache.
 - Pact files not appearing? Verify the test completed successfully and that `target/` is not being cleaned by your IDE between runs.

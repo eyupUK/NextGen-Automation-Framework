@@ -1,9 +1,3 @@
-  - Current weather (London)
-  - Current weather with AQI (London)
-  - City not found error (UnknownCity)
-  - 3-day forecast (London)
-
-For provider verification and broker publishing, see the detailed guide: [docs/CONTRACT_TESTING.md](docs/CONTRACT_TESTING.md)
 # QA Automation Framework: UI • API • Security • Accessibility • Performance • Contract Testing
 
 A unified test automation framework built with Java 21, Maven, Cucumber, Selenium, Rest Assured, axe-core/selenium, and Gatling. It supports BDD-style scenarios for UI and API testing, security header checks, accessibility scanning, and performance load tests.
@@ -228,9 +222,16 @@ The starter feature lives at `src/test/resources/features/performance/perf_smoke
 
 ## Contract Testing (Pact)
 
-This framework includes a ready-to-run Pact consumer test: `com.example.contract.WeatherApiConsumerPactTest`.
+This framework includes a comprehensive Pact consumer test suite for the Weather API: `com.example.contract.WeatherApiConsumerPactTest`.
 
-- Run the Pact tests using the dedicated Maven profile:
+### Test Coverage
+The contract test suite includes 4 comprehensive scenarios:
+- **Current weather (London)** - Basic weather data retrieval
+- **Current weather with AQI (London)** - Air quality data inclusion
+- **City not found error (UnknownCity)** - Error handling validation
+- **3-day forecast (London)** - Forecast data structure verification
+
+### Running Contract Tests
 
 ```bash
 # All consumer pact tests
@@ -240,8 +241,33 @@ mvn -Pcontract test
 mvn -Pcontract -Dtest=WeatherApiConsumerPactTest test
 ```
 
-- Generated pact files are saved under `target/pacts/` (e.g., `QAFrameworkConsumer-WeatherProvider.json`).
-- Interactions covered:
+### Investigation Results
+
+**✅ Framework Status:**
+- Contract test framework is properly configured and dependencies are resolved
+- All 4 test scenarios are properly defined with comprehensive API contract specifications
+- Proper Maven profile setup for isolated contract testing
+- Comprehensive API contract definitions for Weather API
+- PACT dependencies have been corrected and are compatible with Java 21
+
+### Technical Details
+
+**Test Coverage:**
+The contract test suite includes 4 comprehensive scenarios covering the Weather API:
+1. **Current weather (London)** - Basic weather data retrieval with location and temperature validation
+2. **Current weather with AQI (London)** - Air quality data inclusion with CO and NO2 metrics
+3. **City not found error (UnknownCity)** - Error handling validation for invalid city requests
+4. **3-day forecast (London)** - Forecast data structure verification with date patterns and temperature ranges
+
+**Dependencies Fixed:**
+- Removed non-existent `au.com.dius.pact.consumer:java8` dependency
+- Using stable PACT version 4.6.13 with core dependencies: `junit`, `model`, and `support`
+- All dependencies are available in Maven Central and compatible with Java 21
+
+**Contract Specifications:**
+- Uses PACT DSL for robust API contract definitions
+- Proper request/response matching with flexible matchers
+- Error scenario coverage for comprehensive API validation
 
 ## Further Reading
 
