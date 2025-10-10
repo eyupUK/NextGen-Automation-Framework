@@ -6,6 +6,10 @@
 - Java 21
 - Maven 3.x
 - Internet connection (for API calls)
+- For Weather API tests: set your API key first
+  ```bash
+  export WEATHER_API_KEY=your_api_key
+  ```
 
 ### Step 1: Download Dependencies
 ```bash
@@ -19,7 +23,7 @@ mvn clean install -DskipTests
 # Make script executable (first time only)
 chmod +x run-performance-tests.sh
 
-# Run a simple load test
+# Run a simple load test (Weather API requires WEATHER_API_KEY)
 ./run-performance-tests.sh weather-api
 
 # Run with custom parameters
@@ -28,8 +32,8 @@ chmod +x run-performance-tests.sh
 
 #### Option B: Using Maven Directly
 ```bash
-# Run Gatling performance test
-mvn gatling:test
+# Run Gatling performance test (Weather API)
+mvn gatling:test -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation
 
 # Run JUnit-based performance tests
 mvn test -Dtest=WeatherApiPerformanceTest
@@ -56,6 +60,8 @@ cat target/performance-results/weather-api-metrics.csv
 
 ### 1. Weather API Performance Test (Gatling)
 Tests the Weather API with realistic load patterns.
+
+Important: export `WEATHER_API_KEY` first.
 
 **Run Commands:**
 ```bash
@@ -305,4 +311,3 @@ cat target/performance-results/weather-api-metrics.csv
 ---
 
 **Need Help?** Check the full documentation in `docs/PERFORMANCE_TESTING.md`
-

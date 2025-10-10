@@ -51,7 +51,7 @@ mvn clean test
   ```
 - Run a specific feature
   ```bash
-  mvn clean test -Dcucumber.features=src/test/resources/features/login.feature
+  mvn clean test -Dcucumber.features=src/test/resources/features/ui/ui_login.feature
   ```
 - Choose browser / headless
   ```bash
@@ -63,6 +63,8 @@ mvn clean test
 - UI/API default: `com.example.runners.CukesRunner`
 - Accessibility only: `com.example.runners.AccessibilityRunner` (tags: `@accessibility`)
 - Security suite: `com.example.runners.SecurityRunner` (tags: `@security`)
+- Performance (JUnit suite): `com.example.runners.PerformanceRunner`
+- Performance (Cucumber): `com.example.runners.PerformanceCukesRunner` (default tags: `@performance and @smoke`)
 
 You can run these directly from your IDE or leave discovery to Maven Surefire (already configured in `pom.xml`).
 
@@ -192,6 +194,31 @@ mvn -Dtest=PerformanceRunner test
 mvn -Dtest=PerformanceRunner test \
   -Dperf.users=10 -Dperf.rampup=10 -Dperf.duration=60
 ```
+
+### Performance Testing (Cucumber)
+
+A Cucumber runner is available for quick perf smoke checks using the new `@performance` feature(s). By default it only runs scenarios also tagged `@smoke` to keep runs fast.
+
+```bash
+# Prerequisite for Weather examples
+export WEATHER_API_KEY=your_api_key
+
+# Default fast run: executes @performance AND @smoke
+mvn -Dtest=PerformanceCukesRunner test
+
+# Run all @performance scenarios (including non-@smoke)
+mvn -Dtest=PerformanceCukesRunner -Dcucumber.filter.tags='@performance' test
+
+# Tune loads quickly in CI/local using -Dperf.*
+mvn -Dtest=PerformanceCukesRunner test \
+  -Dperf.threads=5 \
+  -Dperf.requests=50 \
+  -Dperf.maxUsers=20 \
+  -Dperf.rampupSeconds=5 \
+  -Dperf.requestsPerUser=3
+```
+
+The starter feature lives at `src/test/resources/features/performance/perf_smoke.feature`. The lighter “simple load” scenario is tagged `@smoke` by default.
 
 ## Further Reading
 

@@ -12,7 +12,8 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
         com.example.performance.tests.WeatherApiPerformanceTest.class,
-        com.example.performance.config.PerformanceConfigInitTest.class
+        com.example.performance.config.PerformanceConfigInitTest.class,
+        com.example.performance.tests.FakeStorePerformanceTest.class
 })
 public class PerformanceRunner {
 }

@@ -18,6 +18,14 @@ import static io.restassured.RestAssured.given;
  */
 public class PerformanceTestingExamples {
 
+    private static int propInt(String key, int def) {
+        try {
+            return Integer.parseInt(System.getProperty(key, String.valueOf(def)));
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
     /**
      * Example 1: Simple Load Test
      * Tests a single endpoint with multiple concurrent users
@@ -25,11 +33,13 @@ public class PerformanceTestingExamples {
     public static void simpleLoadTest() throws InterruptedException {
         System.out.println("=== Example 1: Simple Load Test ===\n");
 
+        int threads = propInt("perf.threads", 10);
+        int totalRequests = propInt("perf.requests", 100);
+
         PerformanceMetricsCollector metrics = new PerformanceMetricsCollector("Simple Load Test");
-        LoadGenerator loadGen = new LoadGenerator(10);
+        LoadGenerator loadGen = new LoadGenerator(threads);
         loadGen.start();
 
-        int totalRequests = 100;
         CountDownLatch latch = new CountDownLatch(totalRequests);
 
         for (int i = 0; i < totalRequests; i++) {
@@ -61,13 +71,14 @@ public class PerformanceTestingExamples {
     public static void rampUpLoadTest() throws InterruptedException {
         System.out.println("=== Example 2: Ramp-Up Load Test ===\n");
 
-        PerformanceMetricsCollector metrics = new PerformanceMetricsCollector("Ramp-Up Test");
-        LoadGenerator loadGen = new LoadGenerator(50);
-        loadGen.start();
+        int threads = propInt("perf.threads", 50);
+        int maxUsers = propInt("perf.maxUsers", 50);
+        int rampUpSeconds = propInt("perf.rampupSeconds", 10);
+        int requestsPerUser = propInt("perf.requestsPerUser", 5);
 
-        int maxUsers = 50;
-        int rampUpSeconds = 10;
-        int requestsPerUser = 5;
+        PerformanceMetricsCollector metrics = new PerformanceMetricsCollector("Ramp-Up Test");
+        LoadGenerator loadGen = new LoadGenerator(threads);
+        loadGen.start();
 
         for (int user = 1; user <= maxUsers; user++) {
             loadGen.execute(() -> {
@@ -90,7 +101,7 @@ public class PerformanceTestingExamples {
             });
 
             // Gradual ramp-up
-            Thread.sleep((rampUpSeconds * 1000L) / maxUsers);
+            Thread.sleep((rampUpSeconds * 1000L) / Math.max(1, maxUsers));
         }
 
         Thread.sleep(5000); // Wait for completion

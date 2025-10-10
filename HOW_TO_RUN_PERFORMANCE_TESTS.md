@@ -5,17 +5,16 @@
 I've created a simplified script for you. Just run:
 
 ```bash
-cd /Users/mac/IdeaProjects/qa-assessment-Eyup-Tozcu
-
+# From the project root
 # Set the API key first
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=your_api_key
 
 # Run the quick test
 ./quick-perf-test.sh
 ```
 
 This will:
-- ✅ Set the API key automatically
+- ✅ Use your API key from the environment
 - ✅ Run a quick 30-second test with 5 users
 - ✅ Open the HTML report when done
 
@@ -27,15 +26,13 @@ If the script doesn't work, run these commands directly:
 
 ### 1. Set the API Key (REQUIRED - Must be done first!)
 ```bash
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=your_api_key
 ```
 
-**⚠️ Important:** The API key MUST be set as an environment variable BEFORE running the test. The performance tests require it to be available at runtime.
+⚠️ Important: The API key MUST be set as an environment variable BEFORE running the test. The performance tests require it to be available at runtime.
 
 ### 2. Run the Performance Test
 ```bash
-cd /Users/mac/IdeaProjects/qa-assessment-Eyup-Tozcu
-
 mvn gatling:test \
   -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=5 \
@@ -59,7 +56,7 @@ open target/gatling-results/*/index.html
 **Solution:**
 ```bash
 # Set it in your current terminal session (MUST DO THIS FIRST!)
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=your_api_key
 
 # Verify it's set
 echo $WEATHER_API_KEY
@@ -68,10 +65,10 @@ echo $WEATHER_API_KEY
 mvn gatling:test -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation
 ```
 
-**Permanent Setup (recommended):**
+**Permanent Setup (optional):**
 ```bash
-# Add to your ~/.zshrc for permanent setup
-echo 'export WEATHER_API_KEY=31ea33c30d254920977133231250909' >> ~/.zshrc
+# Add to your ~/.zshrc for convenience
+echo 'export WEATHER_API_KEY=your_api_key' >> ~/.zshrc
 source ~/.zshrc
 
 # Verify
@@ -98,14 +95,14 @@ mvn clean install -DskipTests
 # Check if Maven is installed
 mvn --version
 
-# If not installed, install it:
+# If not installed, install it (macOS):
 brew install maven
 ```
 
 ### Issue 5: NullPointerException during test initialization
-**This has been fixed!** The issue was that the API key wasn't available during Gatling class initialization. The fix uses `PerformanceConfig.getWeatherApiKey()` which evaluates at runtime.
+This was previously caused by the API key not being available during Gatling class initialization. The fix uses `PerformanceConfig.getWeatherApiKey()` which evaluates at runtime.
 
-**If you still see this:**
+If you still see this:
 1. Make sure you've pulled the latest code
 2. Clean and recompile: `mvn clean compile test-compile`
 3. Ensure WEATHER_API_KEY is exported BEFORE running Maven
@@ -114,11 +111,11 @@ brew install maven
 
 ## 📊 Different Test Configurations
 
-**Remember:** Always set `export WEATHER_API_KEY=31ea33c30d254920977133231250909` first!
+Remember: Always set `export WEATHER_API_KEY=your_api_key` first for Weather API tests!
 
 ### Quick Test (30 seconds, 5 users)
 ```bash
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=your_api_key
 mvn gatling:test \
   -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=5 \
@@ -127,7 +124,7 @@ mvn gatling:test \
 
 ### Load Test (1 minute, 10 users)
 ```bash
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=your_api_key
 mvn gatling:test \
   -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=10 \
@@ -137,7 +134,7 @@ mvn gatling:test \
 
 ### Stress Test (2 minutes, 50 users)
 ```bash
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=your_api_key
 mvn gatling:test \
   -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=50 \
@@ -147,7 +144,7 @@ mvn gatling:test \
 
 ### Spike Test (sudden burst of 100 users)
 ```bash
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=your_api_key
 mvn gatling:test \
   -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=100 \
@@ -169,8 +166,8 @@ mvn gatling:test \
 If you want to use the full `run-performance-tests.sh` script:
 
 ```bash
-# Set API key first!
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+# Set API key first (for Weather API tests)
+export WEATHER_API_KEY=your_api_key
 
 # Make sure it's executable
 chmod +x run-performance-tests.sh
@@ -196,7 +193,7 @@ mvn dependency:tree | grep gatling
 ### 2. Check if API key is set (CRITICAL!)
 ```bash
 echo $WEATHER_API_KEY
-# Should output: 31ea33c30d254920977133231250909
+# Should output your_api_key (or a non-empty value)
 ```
 
 ### 3. Check if Maven can compile
@@ -206,7 +203,7 @@ mvn clean test-compile -DskipTests
 
 ### 4. Run a simple test
 ```bash
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=your_api_key
 ./quick-perf-test.sh
 ```
 
@@ -214,14 +211,14 @@ export WEATHER_API_KEY=31ea33c30d254920977133231250909
 
 ## 📈 What Happens During the Test
 
-1. **Environment variable check** - Tests verify WEATHER_API_KEY is set
-2. **Maven downloads dependencies** (first time only)
-3. **Code compilation** - Tests compile successfully
-4. **Gatling starts** and creates virtual users
-5. **Users make API calls** to Weather API with your key
-6. **Metrics are collected** (response times, throughput, errors)
-7. **HTML report is generated** in `target/gatling-results/`
-8. **Report opens automatically** in your browser
+1. Environment variable check — tests verify WEATHER_API_KEY is set
+2. Maven downloads dependencies (first time only)
+3. Code compilation — tests compile successfully
+4. Gatling starts and creates virtual users
+5. Users make API calls to Weather API with your key
+6. Metrics are collected (response times, throughput, errors)
+7. HTML report is generated in `target/gatling-results/`
+8. Report opens automatically in your browser
 
 ---
 
@@ -240,12 +237,12 @@ After the test completes, you'll see output like:
 ================================================================================
 ```
 
-**Key Metrics:**
-- ✅ **OK**: Successful requests
-- ❌ **KO**: Failed requests (should be 0)
-- **Mean**: Average response time (lower is better)
-- **P95**: 95% of requests were faster than this
-- **P99**: 99% of requests were faster than this
+Key Metrics:
+- ✅ OK: Successful requests
+- ❌ KO: Failed requests (should be 0)
+- Mean: Average response time (lower is better)
+- P95: 95% of requests were faster than this
+- P99: 99% of requests were faster than this
 
 ---
 
@@ -262,19 +259,19 @@ You'll know the test succeeded when:
 
 ## 📞 Quick Troubleshooting
 
-**If the test fails:**
-1. ⚠️ **FIRST**: Check API key is set: `echo $WEATHER_API_KEY`
+If the test fails:
+1. ⚠️ FIRST: Check API key is set: `echo $WEATHER_API_KEY`
 2. Check Maven is installed: `mvn --version`
 3. Check dependencies: `mvn clean install -DskipTests`
 4. Try the simple script: `./quick-perf-test.sh`
 5. Try direct Maven command (see section above)
 
-**If you see compilation errors:**
+If you see compilation errors:
 ```bash
 mvn clean compile test-compile -DskipTests
 ```
 
-**If report doesn't open:**
+If report doesn't open:
 ```bash
 # Find and open manually
 find target/gatling-results -name "index.html" -type f -exec open {} \;
@@ -292,12 +289,12 @@ find target/gatling-results -name "index.html" -type f -exec open {} \;
 
 ---
 
-## 🔑 Important Notes
+## 🔐 Important Notes
 
 ### API Key Requirements:
-- **Local Development**: MUST set `export WEATHER_API_KEY=...` before running tests
-- **GitHub Actions**: Automatically provided from repository secrets
-- **Configuration**: Uses `PerformanceConfig.getWeatherApiKey()` which validates at runtime
+- Local Development: set `export WEATHER_API_KEY=...` before running tests
+- GitHub Actions: typically provided from repository secrets
+- Configuration: uses `PerformanceConfig.getWeatherApiKey()` which validates at runtime
 
 ### How It Works:
 1. `PerformanceConfig.getWeatherApiKey()` checks for the key in this order:
@@ -309,9 +306,9 @@ find target/gatling-results -name "index.html" -type f -exec open {} \;
 
 ---
 
-**Ready to test? Run this now:**
+Ready to test? Run this now:
 ```bash
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=your_api_key
 ./quick-perf-test.sh
 ```
 
