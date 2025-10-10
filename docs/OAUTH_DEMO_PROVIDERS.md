@@ -83,6 +83,20 @@ curl -i "$OAUTH_PROBE_URL" -H "Authorization: Bearer $ACCESS_TOKEN"
 
 If configured properly, you should receive a `200 OK` with JSON matching Spotify’s API schema.
 
+## Running the OAuth Scenarios
+
+- All OAuth scenarios (Duende by default unless you override with `OAUTH_*`):
+```zsh
+mvn clean test -Dtest=SecurityRunner -Dcucumber.filter.tags='@oauth'
+```
+
+- Spotify-only scenarios (opaque token path via `@spotify`):
+```zsh
+mvn clean test -Dtest=SecurityRunner -Dcucumber.filter.tags='@spotify'
+```
+
+> Note: The `@spotify` opaque-token assertion is conditionally skipped if your configured `OAUTH_TOKEN_URL` does not point to Spotify (`accounts.spotify.com`). This prevents false failures when using JWT providers like Duende.
+
 ## Option 3: Local Keycloak (Advanced)
 
 For a closer-to-production experience, you can run a local Keycloak via Docker and configure a client credentials flow. This requires a bit of setup (realm, client, scope, and a protected resource). Consider this when you want to simulate custom token lifetimes, realms, and client policies.

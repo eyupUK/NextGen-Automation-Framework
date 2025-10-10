@@ -113,6 +113,34 @@ mvn clean test -Dcucumber.filter.tags='@security and @api and @no_hsts'
 mvn clean test -Dcucumber.filter.tags='@security and @api and @rate_limit' -DrateLimit.calls=10
 ```
 
+### OAuth Security Tests
+
+We provide realistic OAuth client-credentials tests with two providers. An OAuth toggle helper (`OAuthConfig`) prefers environment variables and falls back to `configuration.properties`.
+
+- Precedence for oauth.* keys:
+  1. Environment variables: `OAUTH_TOKEN_URL`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`, `OAUTH_SCOPE`, `OAUTH_PROBE_URL`
+  2. System properties: `-Doauth.token_url=...` etc.
+  3. `configuration.properties`: `oauth.token_url=...` etc.
+
+- Default provider (Duende demo): already configured in `configuration.properties`
+  ```bash
+  # Run all @oauth scenarios
+  mvn clean test -Dtest=SecurityRunner -Dcucumber.filter.tags='@oauth'
+  ```
+
+- Spotify (opaque tokens): set env vars, then run only @spotify
+  ```bash
+  export OAUTH_TOKEN_URL="https://accounts.spotify.com/api/token"
+  export OAUTH_CLIENT_ID="YOUR_SPOTIFY_CLIENT_ID"
+  export OAUTH_CLIENT_SECRET="YOUR_SPOTIFY_CLIENT_SECRET"
+  export OAUTH_SCOPE=""
+  export OAUTH_PROBE_URL="https://api.spotify.com/v1/search?q=daft%20punk&type=artist&limit=1"
+
+  mvn clean test -Dtest=SecurityRunner -Dcucumber.filter.tags='@spotify'
+  ```
+
+- More details and cURL smoke tests: see [docs/OAUTH_DEMO_PROVIDERS.md](docs/OAUTH_DEMO_PROVIDERS.md)
+
 ## Accessibility
 
 Mark features or scenarios with `@accessibility` and run via the runner or tag filter:

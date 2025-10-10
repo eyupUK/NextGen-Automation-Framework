@@ -1,4 +1,4 @@
-# Java • Cucumber • Selenium • Rest Assured • aXe • Security • Gatling
+# Java • JUnit • Cucumber • Selenium • Rest Assured • aXe • JWT OAuth Owasp  • Gatling
 
 - Quick Links: [README.md](README.md) (quick start) • [HOW_TO_RUN_PERFORMANCE_TESTS.md](HOW_TO_RUN_PERFORMANCE_TESTS.md) (performance guide)
 

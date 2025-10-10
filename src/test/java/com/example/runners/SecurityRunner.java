@@ -16,7 +16,7 @@ import org.junit.runner.RunWith;
         features = "src/test/resources/features/security",
         glue = "com/example/steps",
         dryRun = false,
-        tags = "@oauth"
+        tags = "@oauth or @jwt"
 )
 public class SecurityRunner {
 }

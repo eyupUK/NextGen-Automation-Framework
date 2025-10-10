@@ -1,7 +1,6 @@
 package com.example.steps.security;
 
 import com.example.support.security.JwtUtils;
-import com.example.util.ConfigurationReader;
 import com.example.util.OAuthConfig;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;

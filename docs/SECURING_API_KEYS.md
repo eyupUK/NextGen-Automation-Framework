@@ -144,6 +144,70 @@ All non-sensitive configuration remains:
 
 ---
 
+## 🔐 Securing OAuth Client Credentials
+
+OAuth client credentials must never be committed. Use environment variables or CI secrets.
+
+- Required keys (client-credentials flow):
+  - `OAUTH_TOKEN_URL` (e.g., Duende: `https://demo.duendesoftware.com/connect/token`)
+  - `OAUTH_CLIENT_ID`
+  - `OAUTH_CLIENT_SECRET`
+  - `OAUTH_SCOPE` (optional; empty for Spotify)
+  - `OAUTH_PROBE_URL` (protected resource to call)
+
+- Resolution order used by the framework (`OAuthConfig` helper):
+  1. Environment variables: `OAUTH_*`
+  2. System properties: `-Doauth.token_url=...` etc.
+  3. `configuration.properties`: `oauth.token_url=...` etc.
+
+### Local setup
+```bash
+# Duende (JWT tokens)
+export OAUTH_TOKEN_URL="https://demo.duendesoftware.com/connect/token"
+export OAUTH_CLIENT_ID="m2m.short"
+export OAUTH_CLIENT_SECRET="secret"
+export OAUTH_SCOPE="api"
+export OAUTH_PROBE_URL="https://demo.duendesoftware.com/api/test"
+
+# Spotify (opaque tokens)
+export OAUTH_TOKEN_URL="https://accounts.spotify.com/api/token"
+export OAUTH_CLIENT_ID="<your_spotify_client_id>"
+export OAUTH_CLIENT_SECRET="<your_spotify_client_secret>"
+export OAUTH_SCOPE=""
+export OAUTH_PROBE_URL="https://api.spotify.com/v1/search?q=daft%20punk&type=artist&limit=1"
+```
+
+### GitHub Actions secrets
+Add these repository secrets as needed:
+- `OAUTH_TOKEN_URL`
+- `OAUTH_CLIENT_ID`
+- `OAUTH_CLIENT_SECRET`
+- `OAUTH_SCOPE`
+- `OAUTH_PROBE_URL`
+
+Then expose them to jobs as env vars:
+```yaml
+env:
+  OAUTH_TOKEN_URL: ${{ secrets.OAUTH_TOKEN_URL }}
+  OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+  OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+  OAUTH_SCOPE: ${{ secrets.OAUTH_SCOPE }}
+  OAUTH_PROBE_URL: ${{ secrets.OAUTH_PROBE_URL }}
+```
+
+### Running OAuth security tests
+```bash
+# All OAuth scenarios (Duende defaults if not overridden)
+mvn clean test -Dtest=SecurityRunner -Dcucumber.filter.tags='@oauth'
+
+# Spotify-only scenarios (opaque tokens)
+mvn clean test -Dtest=SecurityRunner -Dcucumber.filter.tags='@spotify'
+```
+
+> Note: The `@spotify` opaque-token assertion is skipped automatically if your `OAUTH_TOKEN_URL` is not Spotify (to avoid false failures when using JWT providers like Duende).
+
+---
+
 ## 🚨 Important: Before Pushing to GitHub
 
 1. **Add the GitHub Secret** (see Step 1 above)
@@ -185,9 +249,9 @@ export WEATHER_API_KEY=new_key_here
 
 1. **Never commit the actual key** - it's now safe in GitHub Secrets
 2. **Share template file** - `configuration.properties.template` with team
-3. **Document in README** - Tell team members to set `WEATHER_API_KEY` env var
+3. **Document in README** - Tell team members to set `WEATHER_API_KEY` and `OAUTH_*` env vars
 4. **Use .env files** - For local development (already in .gitignore)
-5. **Rotate regularly** - Update API keys periodically for security
+5. **Rotate regularly** - Update API keys and OAuth client secrets periodically
 
 ---
 
@@ -195,55 +259,13 @@ export WEATHER_API_KEY=new_key_here
 
 Your configuration is now secure! Here's the complete setup:
 
-✅ **Configuration file:** API key removed, instructions added
-✅ **ConfigurationReader:** Now reads from environment variables
-✅ **GitHub Actions:** All 4 workflows updated with secrets
-✅ **Template file:** Created for team members
-✅ **.gitignore:** Updated to prevent accidental commits
-✅ **Documentation:** Complete guide created
+✅ **ConfigurationReader** reads from env/system/properties for general keys
+✅ **OAuthConfig** prefers `OAUTH_*` env vars for oauth.* keys
+✅ **GitHub Actions** can inject secrets via `env` → `secrets.*`
+✅ **Template file** includes commented examples for Duende/Spotify
+✅ **Documentation** includes complete setup for Weather API and OAuth
 
 **Next Steps:**
-1. Set up `WEATHER_API_KEY` environment variable locally
-2. Add `WEATHER_API_KEY` secret to GitHub repository
-3. Test locally: `export WEATHER_API_KEY=`your api key here` && mvn test`
-4. Push to GitHub
-5. Run GitHub Actions to verify
-
-Your API key is now secure and won't be exposed in your public repository! 🔐
-# 🔐 Securing API Keys with GitHub Secrets
-
-## ✅ What Was Done
-
-Your Weather API key has been secured! Here's what I implemented:
-
-### 1. **Removed API Key from Configuration File** ✅
-- Removed `WEATHER_API_KEY=`your api key here` from `configuration.properties`
-- Added instructions to use environment variables instead
-
-### 2. **Updated ConfigurationReader** ✅
-- Now supports environment variables (highest priority)
-- Falls back to system properties (-D arguments)
-- Finally falls back to configuration.properties
-- **Order of priority:**
-  1. Environment variable (e.g., `WEATHER_API_KEY` in system)
-  2. System property (e.g., `-DWEATHER_API_KEY=...`)
-  3. Configuration file
-
-### 3. **Updated All GitHub Actions Workflows** ✅
-Added `env: WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}` to:
-- ✅ `performance-tests.yml`
-- ✅ `nightly-performance.yml`
-- ✅ `pr-performance.yml`
-- ✅ `stress-test.yml`
-
-### 4. **Created Template File** ✅
-- `configuration.properties.template` - Safe template for developers
-
-### 5. **Updated .gitignore** ✅
-- Added protection against accidentally committing sensitive files
-
----
-
-## 🚀 How to Set Up GitHub Secret
-
-
+1. Set up `WEATHER_API_KEY` locally
+2. Set up `OAUTH_*` variables (Duende or Spotify)
+3. Run `@oauth` or `@spotify` tests via `SecurityRunner`
