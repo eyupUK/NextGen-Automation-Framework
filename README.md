@@ -1,4 +1,4 @@
-# QA Automation Framework: UI • API • Security • Accessibility • Performance
+# QA Automation Framework: UI • API • Security • Accessibility • Performance • Contract Testing
 
 A unified test automation framework built with Java 21, Maven, Cucumber, Selenium, Rest Assured, axe-core/selenium, and Gatling. It supports BDD-style scenarios for UI and API testing, security header checks, accessibility scanning, and performance load tests.
 
@@ -64,7 +64,7 @@ mvn clean test
 - Accessibility only: `com.example.runners.AccessibilityRunner` (tags: `@accessibility`)
 - Security suite: `com.example.runners.SecurityRunner` (tags: `@security`)
 - Performance (JUnit suite): `com.example.runners.PerformanceRunner`
-- Performance (Cucumber): `com.example.runners.PerformanceCukesRunner` (default tags: `@performance and @smoke`)
+- Performance (Cucumber): `com.example.runners.PerformanceCukesRunner` (default tags: `@performance`)
 
 You can run these directly from your IDE or leave discovery to Maven Surefire (already configured in `pom.xml`).
 
@@ -197,16 +197,16 @@ mvn -Dtest=PerformanceRunner test \
 
 ### Performance Testing (Cucumber)
 
-A Cucumber runner is available for quick perf smoke checks using the new `@performance` feature(s). By default it only runs scenarios also tagged `@smoke` to keep runs fast.
+A Cucumber runner is available for quick perf checks using the `@performance` feature(s).
 
 ```bash
 # Prerequisite for Weather examples
 export WEATHER_API_KEY=your_api_key
 
-# Default fast run: executes @performance AND @smoke
+# Default run: executes @performance
 mvn -Dtest=PerformanceCukesRunner test
 
-# Run all @performance scenarios (including non-@smoke)
+# Run all @performance scenarios with explicit filter (optional)
 mvn -Dtest=PerformanceCukesRunner -Dcucumber.filter.tags='@performance' test
 
 # Tune loads quickly in CI/local using -Dperf.*
@@ -218,7 +218,20 @@ mvn -Dtest=PerformanceCukesRunner test \
   -Dperf.requestsPerUser=3
 ```
 
-The starter feature lives at `src/test/resources/features/performance/perf_smoke.feature`. The lighter “simple load” scenario is tagged `@smoke` by default.
+The starter feature lives at `src/test/resources/features/performance/perf_smoke.feature`.
+
+## Contract Testing (Pact)
+
+This framework is Pact-ready. A placeholder consumer test exists as `com.example.contract.WeatherApiConsumerPactTest`.
+
+- To enable Pact and generate real pact files, follow the guide in `docs/CONTRACT_TESTING.md`.
+- Once enabled, you can run the consumer test to produce `target/pacts/*.json`:
+
+```bash
+mvn -Dtest=WeatherApiConsumerPactTest test
+```
+
+You can then publish or share this pact with a provider project for verification.
 
 ## Further Reading
 

@@ -1,4 +1,4 @@
-# Java • JUnit • Cucumber • Selenium • Rest Assured • aXe • JWT OAuth Owasp  • Gatling
+# Java • JUnit • Cucumber • Selenium • Rest Assured • aXe • JWT OAuth Owasp  • Gatling • Pact
 
 - Quick Links: [README.md](README.md) (quick start) • [HOW_TO_RUN_PERFORMANCE_TESTS.md](HOW_TO_RUN_PERFORMANCE_TESTS.md) (performance guide)
 
@@ -86,7 +86,7 @@ This repository provides a unified automation framework for UI, API, accessibili
 - Accessibility only: `com.example.runners.AccessibilityRunner` (tags: `@accessibility`)
 - Security suite: `com.example.runners.SecurityRunner` (tags: `@security`)
 - Performance (JUnit suite): `com.example.runners.PerformanceRunner`
-- Performance (Cucumber): `com.example.runners.PerformanceCukesRunner` (default tags: `@performance and @smoke`)
+- Performance (Cucumber): `com.example.runners.PerformanceCukesRunner` (default tags: `@performance`)
 
 You can run them from the IDE or with Surefire includes already configured in `pom.xml`.
 
@@ -164,28 +164,39 @@ mvn -Dtest=PerformanceRunner test \
 
 ### Performance (Cucumber)
 
-A Cucumber runner is available for quick perf smoke checks using `@performance` feature(s). By default it runs scenarios also tagged `@smoke` to keep runs fast.
+A Cucumber runner is available for quick perf smoke checks using `@performance` feature(s).
 
 ```bash
 # Prerequisite for Weather examples
 export WEATHER_API_KEY=your_api_key
 
-# Default fast run: executes @performance AND @smoke
+# Default fast run: executes @performance
 mvn -Dtest=PerformanceCukesRunner test
 
-# Run all @performance scenarios (including non-@smoke)
+# Run all @performance scenarios (explicit filter)
 mvn -Dtest=PerformanceCukesRunner -Dcucumber.filter.tags='@performance' test
-
-# Tune loads quickly using -Dperf.*
-mvn -Dtest=PerformanceCukesRunner test \
-  -Dperf.threads=5 \
-  -Dperf.requests=50 \
-  -Dperf.maxUsers=20 \
-  -Dperf.rampupSeconds=5 \
-  -Dperf.requestsPerUser=3
 ```
 
-The starter feature lives at `src/test/resources/features/performance/perf_smoke.feature`. The lighter “simple load” scenario is tagged `@smoke` by default.
+The starter feature lives at `src/test/resources/features/performance/perf_smoke.feature`.
+
+## Contract Testing (Pact)
+
+Consumer-driven contract testing is supported via Pact JVM (JUnit 4):
+
+- Sample test: `com.example.contract.WeatherApiConsumerPactTest`
+- Generate pact file under `target/pacts/QAFrameworkConsumer-WeatherProvider.json`:
+
+```bash
+mvn -Dtest=WeatherApiConsumerPactTest test
+```
+
+Use profile `contract` to run only Pact tests matching `*PactTest.java`:
+
+```bash
+mvn -Pcontract test
+```
+
+Share the generated pact with the provider service (or a Pact Broker) for verification.
 
 ## Reports
 
