@@ -1,9 +1,9 @@
 @security @web
 Feature: SauceDemo.com security checks
 
-  As a security-focused web tester
-  I want to validate security headers and mixed-content policies on the homepage
-  So that users are protected against common web threats
+   As a security-focused web tester
+   I want to validate security headers and mixed-content policies on the homepage
+   So that users are protected against common web threats
 
   # Acceptance Criteria
   # - Homepage response includes Strict-Transport-Security, X-Content-Type-Options=nosniff, and a Content-Security-Policy header.
@@ -18,7 +18,7 @@ Feature: SauceDemo.com security checks
   # - OWASP baseline checks are implemented in step definitions (no external calls required).
   # - Secrets are not logged; test output artifacts are written under target/.
 
-  Validate important security headers and no mixed content on the public homepage.
+  # Validate important security headers and no mixed content on the public homepage.
 
   Scenario: Homepage returns recommended security headers
     Given I query the SauceDemo homepage

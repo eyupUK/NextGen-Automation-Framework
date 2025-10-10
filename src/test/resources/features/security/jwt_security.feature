@@ -18,7 +18,7 @@ Feature: Public Demo JWT API security checks (EscuelaJS)
   # - HTTPS endpoints are used; JWT parsing avoids logging sensitive claims.
   # - Requests include Authorization: Bearer <token> header; retry/backoff is used if rate-limited.
 
-  Validate that JWT authentication returns a signed token with standard structure and it can be used in requests.
+  # Validate that JWT authentication returns a signed token with standard structure and it can be used in requests.
 
   Background:
     Given the Demo JWT API base is configured

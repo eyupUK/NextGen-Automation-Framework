@@ -2,11 +2,13 @@ package com.example.steps.security;
 
 import com.example.support.security.JwtUtils;
 import com.example.util.ConfigurationReader;
+import com.example.util.OAuthConfig;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import org.junit.Assume;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.Assert.*;
@@ -25,11 +27,12 @@ public class OAuthSecuritySteps {
 
     @Given("OAuth 2.0 client credentials are configured")
     public void oauth_client_credentials_are_configured() {
-        tokenUrl = ConfigurationReader.get("oauth.token_url");
-        clientId = ConfigurationReader.get("oauth.client_id");
-        clientSecret = ConfigurationReader.get("oauth.client_secret");
-        scope = ConfigurationReader.get("oauth.scope");
-        probeUrl = ConfigurationReader.get("oauth.probe_url");
+        // Prefer environment variables (OAUTH_*) and fall back to configuration.properties
+        tokenUrl = OAuthConfig.tokenUrl();
+        clientId = OAuthConfig.clientId();
+        clientSecret = OAuthConfig.clientSecret();
+        scope = OAuthConfig.scope();
+        probeUrl = OAuthConfig.probeUrl();
         assertNotNull("oauth.token_url must be configured for @oauth tests", tokenUrl);
         assertNotNull("oauth.client_id must be configured for @oauth tests", clientId);
         assertNotNull("oauth.client_secret must be configured for @oauth tests", clientSecret);
@@ -67,6 +70,25 @@ public class OAuthSecuritySteps {
             var payload = JwtUtils.decodePayload(accessToken);
             assertNotNull(payload);
         }
+    }
+
+    @Then("the access token is not a JWT")
+    public void the_access_token_is_not_a_jwt() {
+        assertNotNull("No access token available", accessToken);
+        assertFalse("Expected an opaque token (non-JWT)", JwtUtils.isLikelyJwt(accessToken));
+    }
+
+    @Then("the access token is not a JWT for {string}")
+    public void the_access_token_is_not_a_jwt_for_provider(String provider) {
+        assertNotNull("No access token available", accessToken);
+        // Best-effort provider guard to avoid false failures if config isn’t set for Spotify
+        if (provider != null && provider.equalsIgnoreCase("spotify")) {
+            Assume.assumeTrue(
+                    "Skipping opaque-token assertion: OAUTH_TOKEN_URL is not Spotify (set OAUTH_* for Spotify)",
+                    tokenUrl != null && tokenUrl.toLowerCase().contains("accounts.spotify.com")
+            );
+        }
+        assertFalse("Expected an opaque token (non-JWT) for provider " + provider, JwtUtils.isLikelyJwt(accessToken));
     }
 
     @Given("I have an OAuth access token")

@@ -20,7 +20,7 @@ Feature: Weather API security checks
   # - JSON schema files are available under src/test/resources/schemas/.
   # - Rate limiting respected in tests (add waits/backoff when necessary).
 
-  Ensure the Weather API enforces authentication, resists simple injection attempts, and returns security headers.
+  # Ensure the Weather API enforces authentication, resists simple injection attempts, and returns security headers.
 
   Background:
     Given the Weather API base is configured

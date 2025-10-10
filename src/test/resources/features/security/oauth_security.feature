@@ -5,6 +5,8 @@ Feature: OAuth 2.0 security checks
   I want to obtain and use access tokens via client credentials
   So that my service can call protected resources securely
 
+  # Validate that OAuth client credentials can obtain an access token and use it to call a protected resource.
+
   # Acceptance Criteria
   # - Requesting a token via client credentials grant returns a Bearer access token.
   # - If the token is a JWT, it contains a header with an algorithm and a valid JSON payload.
@@ -16,8 +18,6 @@ Feature: OAuth 2.0 security checks
   # - HTTPS endpoints are used; secrets (client secret/token) are not logged.
   # - Authorization header uses the appropriate scheme (Basic for token request if required; Bearer for resource).
   # - Retry/backoff is used if rate-limited; time sync considered for JWT validation if needed.
-
-  Validate that OAuth client credentials can obtain an access token and use it to call a protected resource.
 
   Background:
     Given OAuth 2.0 client credentials are configured
@@ -31,3 +31,13 @@ Feature: OAuth 2.0 security checks
     Given I have an OAuth access token
     When I call the OAuth probe endpoint with the token
     Then the response status is a successful 2xx
+
+  @spotify
+  Scenario Outline: Opaque token path for <provider>
+    When I request an OAuth access token
+    Then I receive an access token of type Bearer
+    And the access token is not a JWT for "<provider>"
+
+    Examples:
+      | provider |
+      | spotify  |

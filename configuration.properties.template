@@ -43,3 +43,21 @@ oauth.client_secret=
 oauth.scope=
 # Probe URL to call with Bearer token (GET)
 oauth.probe_url=
+
+# --- Examples ---
+# Example A) Duende IdentityServer (public demo)
+# oauth.token_url=https://demo.duendesoftware.com/connect/token
+# oauth.client_id=m2m.short
+# oauth.client_secret=secret
+# oauth.scope=api
+# oauth.probe_url=https://demo.duendesoftware.com/api/test
+# Docs: https://duendesoftware.com/products/identityserver
+
+# Example B) Spotify API (register your app at https://developer.spotify.com/dashboard)
+# Note: Many public endpoints work with just a client-credentials token (no user scopes).
+# oauth.token_url=https://accounts.spotify.com/api/token
+# oauth.client_id=YOUR_SPOTIFY_CLIENT_ID
+# oauth.client_secret=YOUR_SPOTIFY_CLIENT_SECRET
+# oauth.scope=
+# oauth.probe_url=https://api.spotify.com/v1/search?q=daft%20punk&type=artist&limit=1
+# Docs: https://developer.spotify.com/documentation/web-api/tutorials/client-credentials-flow
