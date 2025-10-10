@@ -35,7 +35,7 @@ import org.junit.runner.RunWith;
         features = "src/test/resources/features",
         glue = "com/example/steps",
         dryRun = false,
-        tags = "not @accessibility"
+        tags = "not @accessibility and not @security" // Exclude accessibility and security tests
 )
 public class CukesRunner {
 }

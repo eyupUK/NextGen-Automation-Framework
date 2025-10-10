@@ -1,45 +1,159 @@
-# QA Automation Tasks
+# QA Automation Framework: UI • API • Security • Accessibility • Performance
 
-## Scenario 1: API Automated Testing
+A unified test automation framework built with Java 21, Maven, Cucumber, Selenium, Rest Assured, axe-core/selenium, and Gatling. It supports BDD-style scenarios for UI and API testing, security header checks, accessibility scanning, and performance load tests.
 
-Write a test automation script to test a RESTful API endpoint https://www.weatherapi.com/ using the free account
+- Detailed framework guide: see [readmeINFO.md](readmeINFO.md)
+- Performance quick guide: see [HOW_TO_RUN_PERFORMANCE_TESTS.md](HOW_TO_RUN_PERFORMANCE_TESTS.md)
 
-* Implement automated tests for at least 2 endpoints which Include GET and POST requests and verify response status codes, data correctness, and data type.
+## Prerequisites
 
-Note: Handle error cases gracefully.
+- Java 21 (JDK). Ensure JAVA_HOME points to your JDK 21 installation
+- Maven 3.9+
+- IntelliJ IDEA (recommended)
+- Optional: Allure CLI for viewing local Allure reports
 
-*  Modify your API tests to include parameterisation for different test data, so that you can iterate test data from a data store (CSV/Excel or any data store of your choice)
+## Quick Start
 
+```bash
+# 1) Clone and enter the project
+git clone <your-repo-url>
+cd qa-assessment-Eyup-Tozcu
 
-## Scenario 2: Data Validation
+# 2) Create your local config from the template
+cp configuration.properties.template configuration.properties
 
-* Implement data validation in your above tests. Verify the API response against a schema or JSON schema (e.g Use any library or tool for schema validation)
+# 3) Run tests (default runner excludes @accessibility and @security)
+mvn clean test
+```
 
- 
-## Scenario 3: UI Automated Testing
+## Configuration
 
-Write a UI automation script to test the website https://www.saucedemo.com/
+- Browser selection via `configuration.properties` or system property:
+  - Supported: `chrome`, `chrome-headless`, `firefox`, `firefox-headless`, `safari` (macOS), `edge` (Windows)
+  - Example: `mvn clean test -Dbrowser=chrome-headless`
+  - Headless toggle: `-Dheadless=true` (defaults to headless on CI, headed locally)
+- SauceDemo URL and sample creds are defined in the config template
+- Weather API base URL is configured in the template; provide your key via env var:
+  ```bash
+  export WEATHER_API_KEY=your_api_key
+  ```
 
-* Automate at least 2 test scenarios, such as login, product search, or adding an item to the cart along with implementation of assertions to verify expected UI elements. You should demonstrate test setup and teardown methods.
+## Running Tests
 
-Note: Handle synchronisation issues effectively.
+- Default test run (UI/API; excludes accessibility and security via runner tags)
+  ```bash
+  mvn clean test
+  ```
+- Filter by tags (Cucumber v6)
+  ```bash
+  mvn clean test -Dcucumber.filter.tags="@smoke"
+  mvn clean test -Dcucumber.filter.tags="not @accessibility and not @security"
+  ```
+- Run a specific feature
+  ```bash
+  mvn clean test -Dcucumber.features=src/test/resources/features/login.feature
+  ```
+- Choose browser / headless
+  ```bash
+  mvn clean test -Dbrowser=firefox -Dheadless=true
+  ```
 
-* Implement the Page Object Model for the e-commerce website and refactor your previous UI tests to use the POM structure.
+### Runners
 
- 
-## Scenario 4: UI Frameworks
+- UI/API default: `com.example.runners.CukesRunner`
+- Accessibility only: `com.example.runners.AccessibilityRunner` (tags: `@accessibility`)
+- Security suite: `com.example.runners.SecurityRunner` (tags: `@security`)
 
-* Create a modular framework for your UI tests and implement error handling, logging, and report generation.
+You can run these directly from your IDE or leave discovery to Maven Surefire (already configured in `pom.xml`).
 
-* The framework should be reusable for other UI test scenarios.
+## Security Test Suite
 
-Note: UI test to run on multiple browsers (e.g., Chrome and Firefox) and the ability to configure the target browser options in a configuration file
+This project includes a Cucumber-based security suite for both the public website (SauceDemo) and the Weather API.
 
+- Feature files
+  - Web: `src/test/resources/features/security/saucedemo_security.feature`
+  - API: `src/test/resources/features/security/weather_api_security.feature`
+- Tags
+  - `@security`: All security scenarios
+  - `@web`: Web (SauceDemo) security scenarios
+  - `@api`: Weather API security scenarios
+  - `@requires_key`: Scenarios requiring a valid Weather API key
+  - `@rate_limit`: Rate-limiting scenarios (may produce 429s; excluded by default in CI)
+  - `@no_hsts`: Use relaxed API baseline (do not require HSTS header for JSON endpoints)
+- Baselines
+  - HTML baseline (web pages): X-Content-Type-Options, X-Frame-Options or CSP frame-ancestors, Referrer-Policy, Permissions-Policy, HSTS
+  - API baseline (JSON): X-Content-Type-Options (+ HSTS unless `@no_hsts`)
 
-## Nice to Haves
+### Setup
 
-* Integrate your tests with a test reporting tool of your choice
+```bash
+cp configuration.properties.template configuration.properties
+export WEATHER_API_KEY=your_api_key_here
+```
 
-* Ability to run Performance tests
+### Run recipes
 
-* Generate detailed reports with test results, screenshots, and logs.
+```bash
+# All security tests
+mvn clean test -Dcucumber.filter.tags='@security'
+
+# Web-only (SauceDemo)
+mvn clean test -Dcucumber.filter.tags='@security and @web'
+
+# API-only (requires WEATHER_API_KEY)
+mvn clean test -Dcucumber.filter.tags='@security and @api'
+
+# Exclude rate-limit scenarios
+mvn clean test -Dcucumber.filter.tags='@security and not @rate_limit'
+
+# Use relaxed API baseline (no HSTS)
+mvn clean test -Dcucumber.filter.tags='@security and @api and @no_hsts'
+
+# Configure rate-limit call count (override feature default)
+mvn clean test -Dcucumber.filter.tags='@security and @api and @rate_limit' -DrateLimit.calls=10
+```
+
+## Accessibility
+
+Mark features or scenarios with `@accessibility` and run via the runner or tag filter:
+
+```bash
+mvn clean test -Dcucumber.filter.tags='@accessibility'
+```
+
+## Reports
+
+- Cucumber HTML: `target/cucumber-report.html`
+- Cucumber JSON: `target/cucumber.json`
+- Allure results: `target/allure-results/`
+
+View Allure locally:
+
+```bash
+allure serve target/allure-results
+```
+
+## Performance Testing (Gatling)
+
+Start here for the complete guide: [HOW_TO_RUN_PERFORMANCE_TESTS.md](HOW_TO_RUN_PERFORMANCE_TESTS.md)
+
+Quick start:
+
+```bash
+export WEATHER_API_KEY=your_api_key
+./quick-perf-test.sh
+
+# or run directly with Maven
+mvn gatling:test \
+  -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+  -Dperf.users=5 -Dperf.duration=30
+```
+
+## Further Reading
+
+- Detailed framework overview and usage: [readmeINFO.md](readmeINFO.md)
+- Performance testing recipes and troubleshooting: [HOW_TO_RUN_PERFORMANCE_TESTS.md](HOW_TO_RUN_PERFORMANCE_TESTS.md)
+
+## Housekeeping
+
+- Allure results are generated under `target/allure-results/` during local runs. If you see a root-level `allure-results/` directory, it likely contains stale, committed artifacts from earlier runs. These have been removed and the directory is ignored going forward.

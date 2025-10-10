@@ -1,0 +1,46 @@
+name: Security Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ web, api ]
+    env:
+      # Provide API key via GitHub Secrets for API scenarios
+      WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      - name: Run Security Tests (web)
+        if: matrix.target == 'web'
+        run: |
+          ./mvnw -B -DtrimStackTrace=false -Dcucumber.filter.tags='@security and @web' test
+
+      - name: Run Security Tests (api)
+        if: matrix.target == 'api'
+        run: |
+          ./mvnw -B -DtrimStackTrace=false -Dcucumber.filter.tags='@security and @api and not @rate_limit' test
+

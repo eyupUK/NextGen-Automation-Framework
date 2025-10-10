@@ -37,6 +37,7 @@
                         <include>**/CukesRunner.java</include>
                         <include>**/FailedTestRunner.java</include>
                         <include>**/AccessibilityRunner.java</include>
+                        <include>**/SecurityRunner.java</include>
                     </includes>
                     <systemPropertyVariables>
                         <!-- Headless mode toggle: -Dheadless=true -->
@@ -132,12 +133,12 @@
             <version>${selenium.version}</version>
         </dependency>
         <!-- Explicit DevTools matching installed Chrome (141) to reduce CDP warnings -->
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-devtools-v141</artifactId>
-            <version>${selenium.version}</version>
-            <scope>test</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.seleniumhq.selenium</groupId>-->
+<!--            <artifactId>selenium-devtools-v141</artifactId>-->
+<!--            <version>${selenium.version}</version>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
         <dependency>

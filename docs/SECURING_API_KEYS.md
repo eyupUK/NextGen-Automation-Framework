@@ -6,7 +6,7 @@
 4. Click **"New repository secret"**
 5. Fill in:
    - **Name:** `WEATHER_API_KEY`
-   - **Secret:** `31ea33c30d254920977133231250909`
+   - **Secret:** `your api key here`
 6. Click **"Add secret"**
 
 **Screenshot Guide:**
@@ -14,7 +14,7 @@
 Settings → Secrets and variables → Actions → New repository secret
 ┌─────────────────────────────────────────┐
 │ Name: WEATHER_API_KEY                   │
-│ Secret: 31ea33c30d254920977133231250909 │
+│ Secret: `your api key here` │
 │                                         │
 │ [ Add secret ]                          │
 └─────────────────────────────────────────┘
@@ -29,7 +29,7 @@ Settings → Secrets and variables → Actions → New repository secret
 **On macOS/Linux:**
 ```bash
 # Set for current session
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=`your api key here`
 
 # Run tests
 mvn test
@@ -39,25 +39,25 @@ mvn test
 **On macOS/Linux (permanent):**
 Add to `~/.zshrc` or `~/.bash_profile`:
 ```bash
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=`your api key here`
 ```
 Then: `source ~/.zshrc`
 
 **On Windows (PowerShell):**
 ```powershell
-$env:WEATHER_API_KEY="31ea33c30d254920977133231250909"
+$env:WEATHER_API_KEY=`your api key here`
 mvn test
 ```
 
 **On Windows (Command Prompt):**
 ```cmd
-set WEATHER_API_KEY=31ea33c30d254920977133231250909
+set WEATHER_API_KEY=`your api key here`
 mvn test
 ```
 
 ### Option 2: Use System Property
 ```bash
-mvn test -DWEATHER_API_KEY=31ea33c30d254920977133231250909
+mvn test -DWEATHER_API_KEY=`your api key here`
 ```
 
 ### Option 3: Create Local Configuration (Not Recommended)
@@ -74,7 +74,7 @@ cp configuration.properties.template configuration.properties.local
 ### Test Locally:
 ```bash
 # Set the environment variable
-export WEATHER_API_KEY=31ea33c30d254920977133231250909
+export WEATHER_API_KEY=`your api key here`
 
 # Run a quick test
 mvn test -Dtest=WeatherApiSteps
@@ -149,7 +149,7 @@ All non-sensitive configuration remains:
 1. **Add the GitHub Secret** (see Step 1 above)
 2. **Test locally first:**
    ```bash
-   export WEATHER_API_KEY=31ea33c30d254920977133231250909
+   export WEATHER_API_KEY=`your api key here`
    mvn clean test
    ```
 3. **Commit and push:**
@@ -205,7 +205,7 @@ Your configuration is now secure! Here's the complete setup:
 **Next Steps:**
 1. Set up `WEATHER_API_KEY` environment variable locally
 2. Add `WEATHER_API_KEY` secret to GitHub repository
-3. Test locally: `export WEATHER_API_KEY=31ea33c30d254920977133231250909 && mvn test`
+3. Test locally: `export WEATHER_API_KEY=`your api key here` && mvn test`
 4. Push to GitHub
 5. Run GitHub Actions to verify
 
@@ -217,7 +217,7 @@ Your API key is now secure and won't be exposed in your public repository! 🔐
 Your Weather API key has been secured! Here's what I implemented:
 
 ### 1. **Removed API Key from Configuration File** ✅
-- Removed `WEATHER_API_KEY=31ea33c30d254920977133231250909` from `configuration.properties`
+- Removed `WEATHER_API_KEY=`your api key here` from `configuration.properties`
 - Added instructions to use environment variables instead
 
 ### 2. **Updated ConfigurationReader** ✅

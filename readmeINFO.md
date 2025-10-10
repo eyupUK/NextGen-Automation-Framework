@@ -1,91 +1,168 @@
-# Java-Cucumber-Selenium-Rest Assured Framework
+# Java • Cucumber • Selenium • Rest Assured • aXe • Security • Gatling
 
-This repository provides an automation framework using Selenium, Cucumber, Rest Assured and Java for web application and API testing. It demonstrates BDD with Cucumber, integrates Selenium for UI automation, and supports API testing for domains like SauceLabs, Fake API Store, and weather APIs.
+- Quick Links: [README.md](README.md) (quick start) • [HOW_TO_RUN_PERFORMANCE_TESTS.md](HOW_TO_RUN_PERFORMANCE_TESTS.md) (performance guide)
+
+This repository provides a unified automation framework for UI, API, accessibility, security baseline, and performance testing using Java 21, Maven, Selenium, Cucumber, Rest Assured, axe-core/selenium, and Gatling.
 
 ## Prerequisites
 
-- JDK 21 (LTS)  
-  Ensure `JAVA_HOME` is set to `/Users/mac/Library/Java/JavaVirtualMachines/openjdk-21/Contents/Home`
-- Maven  
-  Ensure Maven is installed and available in your `PATH`
-- IntelliJ IDEA (recommended) or Eclipse with Maven, Cucumber, and Git plugins
-- Allure CLI (optional, for advanced reporting)
+- JDK 21
+  - Ensure JAVA_HOME points to your JDK 21 install
+- Maven 3.9+
+- IntelliJ IDEA (recommended)
+- Optional: Allure CLI for local report viewing
 
-## Features
+## Highlights
 
-- **Selenium Integration**: Automates web UI interactions.
-- **Cucumber BDD**: Write tests in Gherkin syntax for better collaboration.
-- **Java**: Robust, maintainable test code.
-- **Dynamic Data Testing**: Supports parameterized and data-driven tests.
-- **Error Handling**: Captures screenshots and logs on failures.
-- **Reporting**: Generates Surefire, Cucumber, HTML, and JSON reports. Allure integration for advanced reporting.
-- **Configuration Management**: Uses `configuration.properties` for environment and credential management.
-- **Utilities**: Helpers for UI, API, Excel, and more.
-- **Page Object Model**: Clean separation of UI logic.
-- **Cross-Browser Support**: Run tests on Chrome, Firefox, etc. (local ChromeDriver required for local runs).
-- **Synchronization**: Uses explicit waits for reliable UI automation.
-- **Parallel Execution**: Supports parallel test execution via Maven Surefire plugin.
-- **API Testing**: Includes tests for various public APIs including JSON schema validation.
-- **CI/CD Ready**: Easily integrates with Jenkins, GitHub Actions, etc.
-- **Data Driven Testing**: Supports CSV and JSON data sources.
+- Cucumber BDD with page objects and reusable step libs
+- UI automation with Selenium WebDriver (Chrome, Firefox, Safari, Edge)
+- API testing with Rest Assured (data-driven from CSV/JSON)
+- Accessibility checks with axe-core/selenium (@accessibility)
+- Security baseline checks for headers on web and API endpoints (@security)
+- Parallel execution via Surefire
+- Reporting: Cucumber JSON/HTML, PrettyReports, Allure
+- Performance testing with Gatling (Weather API, etc.)
 
 ## Project Structure
 
-- `pom.xml` — Maven build and dependency management
-- `src/test/java` — Step definitions, hooks, runners, page objects, utilities
-- `src/test/resources` — Feature files, configuration
-- `configuration.properties` — Environment and credential settings
-- `target/` — Build output, reports
-- `allure-results/` — Allure report data
-- `cucumber-report.html` — Cucumber HTML report
+- `pom.xml` — build, dependencies, plugins (Surefire, Allure, Gatling)
+- `src/test/java` — runners, step defs, hooks, page objects, utils
+- `src/test/resources` — feature files, test data, schemas
+- `configuration.properties` — default config (copy from `configuration.properties.template`)
+- `target/` — build outputs and reports
+  - `target/cucumber-report.html` — Cucumber HTML
+  - `target/cucumber.json` — Cucumber JSON
+  - `target/allure-results/` — Allure raw results
+- `scripts` — helper scripts at repo root:
+  - `quick-perf-test.sh`, `run-performance-tests.sh`, `verify-performance-setup.sh`
 
 ## Setup
 
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/insurwave/code-test-Eyup-Tozcu.git
-   cd qa-assessment-Eyup-Tozcu
+1) Clone and open the project
+   ```bash
+   git clone <your-repo-url>
+   cd <your-repo-directory>
+   ```
+2) Create your local config
+   ```bash
+   cp configuration.properties.template configuration.properties
+   ```
+3) (Optional) Install Allure CLI if you want local Allure HTML reports
+
+## Configuration
+
+- Browser: set in `configuration.properties` or via system property
+  - `browser=chrome` (default). Supported: `chrome`, `chrome-headless`, `firefox`, `firefox-headless`, `safari` (macOS), `edge` (Windows)
+  - Headless toggle: `-Dheadless=true` (defaults to headless on CI, headed locally)
+- SauceDemo URL and default credentials exist in the template file
+- Weather API base URL is configured; the API key must be provided via environment
+  - `export WEATHER_API_KEY=your_api_key`
+
+## How to Run
+
+- Run all standard tests (excluding @accessibility and @security by default via runner tags)
+  ```bash
+  mvn clean test
+  ```
+- Specify browser/headless
+  ```bash
+  mvn clean test -Dbrowser=chrome-headless
+  mvn clean test -Dbrowser=firefox -Dheadless=true
+  ```
+- Filter by tags (Cucumber v6 system property)
+  ```bash
+  mvn clean test -Dcucumber.filter.tags="@smoke"
+  mvn clean test -Dcucumber.filter.tags="not @accessibility and not @security"
+  ```
+- Run a specific feature or scenario
+  ```bash
+  mvn clean test -Dcucumber.features=src/test/resources/features/login.feature
+  mvn clean test -Dcucumber.filter.tags="@login and @happy"
+  ```
+
+### Runners
+
+- UI/API default: `com.example.runners.CukesRunner`
+- Accessibility only: `com.example.runners.AccessibilityRunner` (tags: `@accessibility`)
+- Security suite: `com.example.runners.SecurityRunner` (tags: `@security`)
+
+You can run them from the IDE or with Surefire includes already configured in `pom.xml`.
+
+### Security Test Suite
+
+Covers both web (SauceDemo) and API (Weather API) security headers.
+
+- Useful tags
+  - `@security` — all security scenarios
+  - `@web` — web-only
+  - `@api` — API-only (requires `WEATHER_API_KEY`)
+  - `@requires_key` — scenarios needing a valid key
+  - `@rate_limit` — rate-limiting tests (usually excluded in CI)
+  - `@no_hsts` — relaxed API baseline (skip HSTS for JSON endpoints)
+- Examples
+  ```bash
+  # All security tests
+  mvn clean test -Dcucumber.filter.tags='@security'
+  
+  # Web-only
+  mvn clean test -Dcucumber.filter.tags='@security and @web'
+  
+  # API-only (set key first)
+  export WEATHER_API_KEY=your_api_key
+  mvn clean test -Dcucumber.filter.tags='@security and @api'
+  
+  # Exclude rate limit
+  mvn clean test -Dcucumber.filter.tags='@security and not @rate_limit'
+  
+  # Relaxed API baseline without HSTS
+  mvn clean test -Dcucumber.filter.tags='@security and @api and @no_hsts'
+  ```
+
+### Accessibility
+
+- Tag features/scenarios with `@accessibility` and run via `AccessibilityRunner` or tags:
+  ```bash
+  mvn clean test -Dcucumber.filter.tags='@accessibility'
+  ```
+
+## Reports
+
+- Cucumber HTML: `target/cucumber-report.html`
+- Cucumber JSON: `target/cucumber.json`
+- Allure results: `target/allure-results/`
+  - View locally with Allure CLI:
+    ```bash
+    allure serve target/allure-results
     ```
-2. Open in IntelliJ IDEA or Eclipse.
-3. Ensure JDK 21 and Maven are configured.
-4. Update `configuration.properties` with the target URL and credentials if needed.
-5. Install Allure CLI if advanced reporting is needed.
-6. Run tests using Maven commands
-    ```sh
-    mvn verify
-    ```
-7. View reports in `target/cucumber-report.html` or generate Allure reports.
-    ```sh
-    allure serve
-    ```
-8. Review test results and logs in the `target` directory.
+- PrettyReports are also generated via plugin configuration
 
-### Key Components
-- **pom.xml file**: Manages dependencies and builds required for the framework.
-- **Feature File**: Specifies the steps in BDD language style for Selenium tests.
-- **Hooks class**: Sets up preconditions and cleans up after tests.
-- **Step Definition Classes**: Contains automation test code that corresponds to the steps defined in the feature files.
-- **Page Object Class**: Models UI areas as objects within the test code to reduce duplication and maintenance.
-- **Utilities**: Helper classes for common tasks like reading properties, handling Excel files, and managing WebDriver instances.
-- **Cucumber Runner Class**: Configures and runs Cucumber tests.
-- **Configuration Properties File**: Stores environment-specific settings and credentials.
-- **Test Data and Schemas**: Stored in .csv or JSON files for API testing under resource.
+![Allure1](images/allure1.png)
 
-## Running Tests
-To run scenarios, use the following ways: 
-- Run CukesRunner by tagging desired scenarios or all scenarios without any tag.
-- Run specific scenarios by tagging them in the feature file.
-- Run specific scenarios by using Run Test button in the feature file
-- Run specific scenarios by using the cucumber.options parameter in the command line.
-- Navigate to the project directory and run `mvn verify` or `mvn test` to execute tests. Specify browsers with `-Dbrowser=browser_name`. Use `mvn test -Dcucumber.options="classpath:features/my_first.feature"` to run specific features.
-- **Parallel** execution is supported via Maven Surefire plugin configuration.
+![Allure2](images/allure2.png)
 
-## Reporting
-Generates automatically Surfire, Cucumber, HTML, and JSON reports. For allure reports, use `allure generate --clean` or `allure serve` for immediate viewing.
-![Report1](images/allure1.png)
+![Cucumber](images/cucumber.png)
 
-![Report2](images/allure2.png)
+## Performance Testing (Gatling)
 
-![Report3](images/cucumber.png)
-## Note
-This framework does not include sensitive data or browser drivers. Ensure to provide URL in `configuration.properties` and credentials in the feature file.
+Read the step-by-step guide in `HOW_TO_RUN_PERFORMANCE_TESTS.md`. Quick start:
+
+```bash
+# Set the Weather API key
+export WEATHER_API_KEY=your_api_key
+
+# Quick local run
+./quick-perf-test.sh
+
+# Or run directly with Maven
+mvn gatling:test \
+  -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+  -Dperf.users=5 -Dperf.duration=30
+```
+
+Detailed recipes, troubleshooting, and different profiles (load/stress/spike) are documented in `HOW_TO_RUN_PERFORMANCE_TESTS.md`.
+
+## Notes
+
+- Do not commit secrets. Provide the Weather API key via environment variables.
+- Browser drivers are managed by your local browser/driver setup. Safari is macOS-only; Edge requires Windows.
+- If you see CI-related flags in logs, they are set to make Chrome stable in containerized runners.

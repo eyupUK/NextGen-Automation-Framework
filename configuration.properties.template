@@ -9,7 +9,7 @@ sauceDemoUrl=https://www.saucedemo.com/
 
 
 # base url for testing GET method
-weather_api_base_url=http://api.weatherapi.com/v1
+weather_api_base_url=https://api.weatherapi.com/v1
 # IMPORTANT: Add your Weather API key as environment variable
 # Set WEATHER_API_KEY environment variable in your system
 # Example: export WEATHER_API_KEY=your_api_key_here
@@ -28,4 +28,3 @@ perf.rampup=10
 perf.duration=60
 perf.spike.users=50
 perf.stress.users=100
-
