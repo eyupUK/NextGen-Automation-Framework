@@ -177,6 +177,22 @@ mvn gatling:test \
   -Dperf.users=5 -Dperf.duration=30
 ```
 
+### Performance Testing (JUnit Runner)
+
+You can also run REST Assured-based performance tests via a dedicated JUnit suite runner.
+
+```bash
+# Prerequisite
+export WEATHER_API_KEY=your_api_key
+
+# Run the JUnit performance suite
+mvn -Dtest=PerformanceRunner test
+
+# Optional overrides
+mvn -Dtest=PerformanceRunner test \
+  -Dperf.users=10 -Dperf.rampup=10 -Dperf.duration=60
+```
+
 ## Further Reading
 
 - Detailed framework overview and usage: [readmeINFO.md](readmeINFO.md)

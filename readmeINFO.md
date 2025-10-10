@@ -85,6 +85,7 @@ This repository provides a unified automation framework for UI, API, accessibili
 - UI/API default: `com.example.runners.CukesRunner`
 - Accessibility only: `com.example.runners.AccessibilityRunner` (tags: `@accessibility`)
 - Security suite: `com.example.runners.SecurityRunner` (tags: `@security`)
+- Performance (JUnit suite): `com.example.runners.PerformanceRunner`
 
 You can run them from the IDE or with Surefire includes already configured in `pom.xml`.
 
@@ -125,24 +126,9 @@ Covers both web (SauceDemo) and API (Weather API) security headers.
   mvn clean test -Dcucumber.filter.tags='@accessibility'
   ```
 
-## Reports
+## Performance Testing
 
-- Cucumber HTML: `target/cucumber-report.html`
-- Cucumber JSON: `target/cucumber.json`
-- Allure results: `target/allure-results/`
-  - View locally with Allure CLI:
-    ```bash
-    allure serve target/allure-results
-    ```
-- PrettyReports are also generated via plugin configuration
-
-![Allure1](images/allure1.png)
-
-![Allure2](images/allure2.png)
-
-![Cucumber](images/cucumber.png)
-
-## Performance Testing (Gatling)
+### Gatling
 
 Read the step-by-step guide in `HOW_TO_RUN_PERFORMANCE_TESTS.md`. Quick start:
 
@@ -159,7 +145,38 @@ mvn gatling:test \
   -Dperf.users=5 -Dperf.duration=30
 ```
 
-Detailed recipes, troubleshooting, and different profiles (load/stress/spike) are documented in `HOW_TO_RUN_PERFORMANCE_TESTS.md`.
+### PerformanceRunner (JUnit)
+
+A JUnit suite to run REST Assured-based performance tests (e.g., `WeatherApiPerformanceTest`).
+
+```bash
+# Prerequisite
+export WEATHER_API_KEY=your_api_key
+
+# Run the JUnit performance suite
+mvn -Dtest=PerformanceRunner test
+
+# Optional overrides
+mvn -Dtest=PerformanceRunner test \
+  -Dperf.users=10 -Dperf.rampup=10 -Dperf.duration=60
+```
+
+## Reports
+
+- Cucumber HTML: `target/cucumber-report.html`
+- Cucumber JSON: `target/cucumber.json`
+- Allure results: `target/allure-results/`
+  - View locally with Allure CLI:
+    ```bash
+    allure serve target/allure-results
+    ```
+- PrettyReports are also generated via plugin configuration
+
+![Allure1](images/allure1.png)
+
+![Allure2](images/allure2.png)
+
+![Cucumber](images/cucumber.png)
 
 ## Notes
 
