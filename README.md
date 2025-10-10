@@ -1,3 +1,9 @@
+  - Current weather (London)
+  - Current weather with AQI (London)
+  - City not found error (UnknownCity)
+  - 3-day forecast (London)
+
+For provider verification and broker publishing, see the detailed guide: [docs/CONTRACT_TESTING.md](docs/CONTRACT_TESTING.md)
 # QA Automation Framework: UI • API • Security • Accessibility • Performance • Contract Testing
 
 A unified test automation framework built with Java 21, Maven, Cucumber, Selenium, Rest Assured, axe-core/selenium, and Gatling. It supports BDD-style scenarios for UI and API testing, security header checks, accessibility scanning, and performance load tests.
@@ -222,16 +228,20 @@ The starter feature lives at `src/test/resources/features/performance/perf_smoke
 
 ## Contract Testing (Pact)
 
-This framework is Pact-ready. A placeholder consumer test exists as `com.example.contract.WeatherApiConsumerPactTest`.
+This framework includes a ready-to-run Pact consumer test: `com.example.contract.WeatherApiConsumerPactTest`.
 
-- To enable Pact and generate real pact files, follow the guide in `docs/CONTRACT_TESTING.md`.
-- Once enabled, you can run the consumer test to produce `target/pacts/*.json`:
+- Run the Pact tests using the dedicated Maven profile:
 
 ```bash
-mvn -Dtest=WeatherApiConsumerPactTest test
+# All consumer pact tests
+mvn -Pcontract test
+
+# Only the Weather API consumer pact test
+mvn -Pcontract -Dtest=WeatherApiConsumerPactTest test
 ```
 
-You can then publish or share this pact with a provider project for verification.
+- Generated pact files are saved under `target/pacts/` (e.g., `QAFrameworkConsumer-WeatherProvider.json`).
+- Interactions covered:
 
 ## Further Reading
 

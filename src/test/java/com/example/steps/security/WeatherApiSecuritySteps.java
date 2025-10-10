@@ -1,5 +1,6 @@
 package com.example.steps.security;
 
+import com.example.config.TestConfig;
 import com.example.util.ConfigurationReader;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -29,7 +30,7 @@ public class WeatherApiSecuritySteps {
         baseUrl = ConfigurationReader.get("weather_api_base_url");
         assertNotNull("weather_api_base_url is not configured", baseUrl);
         // API key may be null; steps that require a valid key assert presence separately
-        apiKey = ConfigurationReader.get("WEATHER_API_KEY");
+        apiKey = TestConfig.API_KEY;
     }
 
     @When("I call current weather with an invalid API key")
@@ -185,17 +186,6 @@ public class WeatherApiSecuritySteps {
         assertNotEquals(429, nextResponse.statusCode());
     }
 
-    @When("I preflight current weather CORS for origin {string}")
-    public void i_preflight_current_weather_cors_for_origin(String origin) {
-        assertNotNull("Weather API base URL must be set", baseUrl);
-        response = given()
-                .baseUri(baseUrl)
-                .header("Origin", origin)
-                .header("Access-Control-Request-Method", "GET")
-                .header("Access-Control-Request-Headers", "Content-Type, Accept")
-                .when()
-                .options("/current.json");
-    }
 
     @When("I preflight current weather CORS for origin {string} method {string} and request headers {string}")
     public void i_preflight_current_weather_cors_for_origin_method_and_request_headers(String origin, String method, String headers) {

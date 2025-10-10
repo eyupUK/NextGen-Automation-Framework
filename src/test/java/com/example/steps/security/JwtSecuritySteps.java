@@ -116,7 +116,8 @@ public class JwtSecuritySteps {
         assertNotNull("Token not acquired", token);
         var payload = JwtUtils.decodePayload(token);
         assertNotNull(payload);
-        assertTrue(payload.entrySet().size() >= 0);
+        // Ensure payload contains at least one claim
+        assertFalse("Payload should not be empty", payload.entrySet().isEmpty());
         // Optional standard claims sanity
         if (payload.has("sub")) {
             assertFalse("sub claim is blank", payload.get("sub").getAsString().isBlank());

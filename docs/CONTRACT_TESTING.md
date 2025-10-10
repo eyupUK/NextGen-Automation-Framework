@@ -1,178 +1,113 @@
 # Contract Testing with Pact (Consumer & Provider)
 
-This project is Pact-ready. Follow this guide to enable consumer-driven contract tests using Pact JVM.
+This project includes Pact JVM consumer testing out of the box. Use this guide to run the tests, generate pact files, and (optionally) verify them against a provider.
 
-## Why Pact?
-- Catch breaking API changes early by testing consumer expectations against provider responses.
-- Share versioned contracts via a Pact Broker (optional) to automate verification in CI/CD.
+## What you get here
+- A ready-to-run consumer test: `src/test/java/com/example/contract/WeatherApiConsumerPactTest.java`
+- Four interactions based on common Weather API patterns:
+  - Current weather (London)
+  - Current weather with AQI (London)
+  - City not found error (UnknownCity)
+  - 3-day forecast (London)
+- Pact files generated under `target/pacts/`
 
 ## Prerequisites
 - Java 21, Maven 3.9+
-- Internet access to download Pact dependencies (or a pre-populated local Maven cache)
+- Internet access for Maven dependencies (or a pre-populated local cache)
 
-## Option A — Quick start (Consumer, JUnit 4)
-
-1) Add dependencies to `pom.xml` (test scope):
+## Dependencies (already included)
+This repo already declares the Pact consumer dependency:
 
 ```xml
-<!-- Pact JVM: Consumer JUnit4 -->
 <dependency>
   <groupId>au.com.dius.pact.consumer</groupId>
   <artifactId>junit</artifactId>
-  <version>4.6.15</version>
+  <version>4.3.6</version>
   <scope>test</scope>
 </dependency>
 ```
 
-Notes:
-- If your environment can’t resolve the dependency (offline/air‑gapped), add Pact to a profile and enable it only in CI or a connected dev machine.
-- For JUnit 5, use `au.com.dius.pact.consumer:junit5` instead.
+If you wish to upgrade Pact later, bump the version in `pom.xml` after reviewing the Pact JVM release notes.
 
-2) Create a consumer test (example):
-
-```java
-package com.example.contract;
-
-import au.com.dius.pact.consumer.PactVerification;
-import au.com.dius.pact.consumer.PactProviderRuleMk2;
-import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
-import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
-import au.com.dius.pact.core.model.RequestResponsePact;
-import au.com.dius.pact.core.model.annotations.Pact;
-import io.restassured.RestAssured;
-import org.junit.Rule;
-import org.junit.Test;
-
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
-
-public class WeatherApiConsumerPactTest {
-
-  @Rule
-  public PactProviderRuleMk2 mockProvider = new PactProviderRuleMk2("WeatherProvider", "localhost", 0, this);
-
-  @Pact(consumer = "QAFrameworkConsumer")
-  public RequestResponsePact createPact(PactDslWithProvider builder) {
-    PactDslJsonBody responseBody = new PactDslJsonBody()
-      .object("location").stringValue("name", "London").closeObject()
-      .object("current").decimalType("temp_c", 12.3).closeObject();
-
-    return builder
-      .given("weather exists for London")
-      .uponReceiving("a request for current weather in London")
-        .path("/v1/current.json")
-        .method("GET")
-        .query("q=London")
-      .willRespondWith()
-        .status(200)
-        .headers("Content-Type", "application/json")
-        .body(responseBody)
-      .toPact();
-  }
-
-  @Test
-  @PactVerification("WeatherProvider")
-  public void verifiesContract() {
-    RestAssured.baseURI = "http://localhost:" + mockProvider.getPort();
-
-    given()
-      .when().get("/v1/current.json?q=London")
-      .then()
-        .statusCode(200)
-        .body("location.name", equalTo("London"))
-        .body("current.temp_c", notNullValue());
-  }
-}
-```
-
-3) Run the consumer test
+## Running consumer Pact tests
+Use the dedicated Maven profile that focuses on Pact tests (includes `**/*PactTest.java`).
 
 ```bash
-mvn -Dtest=WeatherApiConsumerPactTest test
+# Run all Pact tests
+mvn -Pcontract test
+
+# Run only the Weather API consumer pact test
+mvn -Pcontract -Dtest=WeatherApiConsumerPactTest test
 ```
 
-4) Find the generated pact file
+After a successful run, pact files are written to:
 - `target/pacts/QAFrameworkConsumer-WeatherProvider.json`
 
-## Option B — Provider verification (JUnit 4)
+## What the consumer expects (contracts)
+The included test defines these interactions with the mock provider:
+- GET `/v1/current.json?q=London` → 200 with basic current weather fields
+- GET `/v1/current.json?q=London&aqi=yes` → 200 including `current.air_quality.*`
+- GET `/v1/current.json?q=UnknownCity` → 400 with `{ error: { code, message } }`
+- GET `/v1/forecast.json?q=London&days=3` → 200 with `forecast.forecastday[3]` entries
 
-Add provider dependency:
+You can find and modify the test here:
+- `src/test/java/com/example/contract/WeatherApiConsumerPactTest.java`
+
+## Provider verification (optional)
+If you have a real provider service, you can verify it against the generated pacts. Add the provider dependency if needed:
 
 ```xml
 <dependency>
   <groupId>au.com.dius.pact.provider</groupId>
   <artifactId>junit</artifactId>
-  <version>4.6.15</version>
+  <version>4.3.6</version>
   <scope>test</scope>
 </dependency>
 ```
 
-Example skeleton:
+Example skeleton (JUnit 4):
 
 ```java
 @RunWith(au.com.dius.pact.provider.junit.PactRunner.class)
 @Provider("WeatherProvider")
-@PactFolder("target/pacts") // Or @PactBroker
+@PactFolder("target/pacts") // Or use @PactBroker
 public class WeatherProviderPactTest {
 
   @TestTarget
   public final Target target = new HttpTarget("http", "localhost", 8080, "/");
 
   @State("weather exists for London")
-  public void setupState() {
-    // Start provider, seed data, or stub external dependencies
-  }
+  public void stateWeatherExistsForLondon() { /* seed or stub */ }
+
+  @State("weather with AQI exists for London")
+  public void stateWeatherWithAqiExistsForLondon() { /* seed or stub */ }
+
+  @State("no weather exists for UnknownCity")
+  public void stateNoWeatherExistsForUnknownCity() { /* seed or stub */ }
+
+  @State("3-day forecast exists for London")
+  public void stateForecastExistsForLondon() { /* seed or stub */ }
 }
 ```
 
-Run provider verification after starting your real service on port 8080:
+Run provider verification after starting your service on port 8080:
 
 ```bash
 mvn -Dtest=WeatherProviderPactTest test
 ```
 
-## Optional — Activate Pact via a Maven profile
-
-If you want to keep Pact deps off by default, add a profile in `pom.xml`:
-
-```xml
-<profile>
-  <id>pact</id>
-  <dependencies>
-    <dependency>
-      <groupId>au.com.dius.pact.consumer</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.6.15</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>au.com.dius.pact.provider</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.6.15</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-</profile>
-```
-
-Then run:
-
-```bash
-mvn -Ppact -Dtest=WeatherApiConsumerPactTest test
-```
-
 ## Pact Broker (optional)
-- Use a broker to publish and verify pacts across repos.
-- CLI example (once you configure broker URL and credentials):
+If you use a Pact Broker, publish pacts from `target/pacts` and verify them in your provider pipeline.
+A typical CLI invocation (configure broker URL/token first):
 
 ```bash
-# Publish generated pacts
-pact-broker publish target/pacts --consumer-app-version $(git rev-parse --short HEAD) \
-  --broker-base-url https://your-broker --broker-token $PACT_BROKER_TOKEN
+pact-broker publish target/pacts \
+  --consumer-app-version "$(git rev-parse --short HEAD)" \
+  --broker-base-url https://your-broker \
+  --broker-token "$PACT_BROKER_TOKEN"
 ```
 
-## Notes
-- This repo includes a placeholder test `WeatherApiConsumerPactTest` that is skipped by default to keep builds light.
-- To fully enable Pact, add the dependencies above and replace the placeholder with the real consumer test.
-- If your environment cannot fetch dependencies, enable Pact only in CI or a dev machine that has internet access.
-
+## Troubleshooting
+- If tests don’t run, ensure you used the `-Pcontract` profile or targeted the test with `-Dtest=...`.
+- If dependencies fail to resolve, check your Maven settings or run once on a connected machine to warm the cache.
+- Pact files not appearing? Verify the test completed successfully and that `target/` is not being cleaned by your IDE between runs.
