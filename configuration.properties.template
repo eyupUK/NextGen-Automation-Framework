@@ -18,6 +18,11 @@ weather_api_base_url=https://api.weatherapi.com/v1
 # base url for testing POST method
 fakestore_api_base_url=https://fakestoreapi.com
 
+# FakeStore API credentials for JWT auth tests (public demo values work)
+# See https://fakestoreapi.com/docs for details
+fakestore_username=mor_2314
+fakestore_password=83r5^_
+
 STANDARD_USER=standard_user
 
 STANDARD_PASSWORD=secret_sauce
@@ -28,3 +33,13 @@ perf.rampup=10
 perf.duration=60
 perf.spike.users=50
 perf.stress.users=100
+
+# Optional OAuth2 Client Credentials for @oauth tests
+# Provide a token endpoint and client credentials if you have an OAuth server to test against
+# Example usage expects client_credentials grant
+oauth.token_url=
+oauth.client_id=
+oauth.client_secret=
+oauth.scope=
+# Probe URL to call with Bearer token (GET)
+oauth.probe_url=
