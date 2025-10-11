@@ -13,7 +13,7 @@ import org.junit.runner.RunWith;
                 "rerun:target/rerun-accessibility.txt",
                 "me.jvt.cucumber.report.PrettyReports"
         },
-        features = "src/test/resources/accessibility", // only accessibility tests will be executed
+        features = "src/test/resources/features/accessibility", // only accessibility tests will be executed
         glue = "com/example/steps",
         tags = "",
         dryRun = false
