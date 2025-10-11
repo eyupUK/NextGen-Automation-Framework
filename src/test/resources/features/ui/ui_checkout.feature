@@ -1,5 +1,5 @@
 @ui @checkout
-Feature: Checkout
+Feature: Checkout Flow on SauceDemo
 
   As a shopper
   I want to complete a purchase

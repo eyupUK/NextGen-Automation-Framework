@@ -1,5 +1,5 @@
 @accessibility
-Feature: Accessibility testing for SauceDemo
+Feature: Accessibility Testing For SauceDemo
   As a quality engineer
   I want to ensure key pages of SauceDemo meet accessibility standards
   So that users with disabilities can use the site effectively

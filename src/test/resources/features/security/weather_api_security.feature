@@ -1,5 +1,5 @@
 @security @api
-Feature: Weather API security checks
+Feature: Weather API Security Checks
 
   As a security-conscious API tester
   I want to verify authentication, injection resilience, and security headers

@@ -1,5 +1,5 @@
 @security @web
-Feature: SauceDemo.com security checks
+Feature: SauceDemo.com Security Checks
 
    As a security-focused web tester
    I want to validate security headers and mixed-content policies on the homepage

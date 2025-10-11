@@ -1,5 +1,5 @@
 @ui @login
-Feature: Login
+Feature: Login to SauceDemo
 
   As a user of SauceDemo
   I want to login

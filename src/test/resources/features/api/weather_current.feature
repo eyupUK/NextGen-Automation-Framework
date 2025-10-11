@@ -1,5 +1,5 @@
 @api @current
-Feature: Current weather
+Feature: Current Weather from Weather API
 
   As a developer integrating with the Weather API
   I want to fetch current weather by city, zip/postcode, or coordinates

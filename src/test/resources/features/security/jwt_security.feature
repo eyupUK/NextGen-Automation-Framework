@@ -1,5 +1,5 @@
 @security @jwt @api
-Feature: Public Demo JWT API security checks (EscuelaJS)
+Feature: Public Demo JWT API Security Checks (EscuelaJS)
 
   As a security tester of public demo APIs
   I want to verify JWT issuance and protected endpoint access

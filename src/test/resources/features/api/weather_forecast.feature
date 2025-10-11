@@ -1,5 +1,5 @@
 @api @forecast
-Feature: Forecast
+Feature: Forecast Retrieval from Weather API
 
   As a developer integrating with the Weather API
   I want to retrieve multi-day forecast data for different location formats

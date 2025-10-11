@@ -1,5 +1,5 @@
 @performance @api
-Feature: Performance smoke checks
+Feature: Performance Smoke Checks
 
   As a performance engineer
   I want to run small-load smoke tests

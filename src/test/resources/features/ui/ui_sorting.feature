@@ -1,5 +1,5 @@
 @ui @sorting
-Feature: Product sorting
+Feature: Product Sorting on SauceDemo
 
   As a shopper
   I want to sort products

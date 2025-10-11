@@ -1,5 +1,5 @@
 @security @oauth @api
-Feature: OAuth 2.0 security checks
+Feature: OAuth 2.0 Security Checks
 
   As a developer integrating OAuth-protected services
   I want to obtain and use access tokens via client credentials

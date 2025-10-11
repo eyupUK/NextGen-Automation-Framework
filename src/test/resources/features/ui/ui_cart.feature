@@ -1,5 +1,5 @@
 @ui @cart
-Feature: Cart
+Feature: Cart Functionality on SauceDemo
 
   As a logged in shopper
   I want to add items to my cart

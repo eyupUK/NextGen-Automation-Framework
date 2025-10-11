@@ -1,5 +1,5 @@
 @api @errors
-Feature: Bulk and error handling
+Feature: Bulk and Error Handling of Weather API
 
   As a Weather API consumer
   I want clear error responses and defined bulk request behavior
