@@ -67,6 +67,13 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Debug - List target contents
+        if: always()
+        run: |
+          echo "Listing target directory (if exists):" && ls -la target || true
+          echo "\nGatling directories:" && ls -la target/gatling-results 2>/dev/null || true
+          echo "\nPerformance log:" && ls -la performance-output.log 2>/dev/null || true
+
       - name: Upload PR Performance Report
         if: always()
         uses: actions/upload-artifact@v4

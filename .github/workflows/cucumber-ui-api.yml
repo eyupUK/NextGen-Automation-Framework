@@ -55,6 +55,17 @@ jobs:
           -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
           -Dtest=FailedTestRunner test
 
+      - name: Debug - List target contents (if artifacts missing)
+        if: always()
+        run: |
+          echo "Listing target directory (if exists):"
+          ls -la target || true
+          echo "\nKnown report files (if present):"
+          ls -la target/*cucumber*.* 2>/dev/null || true
+          ls -la target/allure-results 2>/dev/null || true
+          ls -la target/cucumber-html-reports 2>/dev/null || true
+          ls -la target/surefire-reports 2>/dev/null || true
+
       - name: Upload Cucumber reports
         uses: actions/upload-artifact@v4
         if: always()
@@ -63,8 +74,11 @@ jobs:
           path: |
             target/ui-api.json
             target/ui-api-report.html
+            target/cucumber.json
+            target/cucumber-report.html
             target/allure-results/**
             target/cucumber-html-reports/**
+            target/surefire-reports/**
             target/rerun.txt
             target/failed-html-report/**
           if-no-files-found: ignore

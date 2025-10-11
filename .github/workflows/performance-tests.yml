@@ -114,6 +114,13 @@ jobs:
             -Dperf.users=${{ env.USERS }}
         continue-on-error: true
 
+      - name: Debug - List target contents (Gatling)
+        if: always()
+        run: |
+          echo "Listing target directory (if exists):" && ls -la target || true
+          echo "\nGatling directories:" && ls -la target/gatling-results 2>/dev/null || true
+          echo "\nAllure results:" && ls -la target/allure-results 2>/dev/null || true
+
       - name: Upload Gatling Reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -172,6 +179,13 @@ jobs:
       - name: Run JUnit Performance Tests
         run: mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest -Dsla.p95.ms=2000 -Dsla.p99.ms=4000 -Dsla.successRate=95
         continue-on-error: true
+
+      - name: Debug - List target contents (JUnit)
+        if: always()
+        run: |
+          echo "Listing target directory (if exists):" && ls -la target || true
+          echo "\nSurefire reports:" && ls -la target/surefire-reports 2>/dev/null || true
+          echo "\nPerformance results:" && ls -la target/performance-results 2>/dev/null || true
 
       - name: Upload Test Results
         if: always()
