@@ -1,0 +1,66 @@
+name: Contract Tests (ContractCukesRunner)
+
+on:
+  push:
+    branches: [ main, master ]
+#  pull_request:
+#    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Contract (ContractCukesRunner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Run Contract Cucumber tests
+        id: test
+        continue-on-error: true
+        run: mvn -B -Dheadless=true -Dtest=ContractCukesRunner test
+
+      - name: Rerun failed scenarios (if any)
+        if: ${{ steps.test.conclusion == 'failure' }}
+        run: |
+          if [ -f target/contract-rerun.txt ]; then
+            cp target/contract-rerun.txt target/rerun.txt
+            mvn -B -Dheadless=true -Dtest=FailedTestRunner test
+          else
+            echo "No contract rerun file found"
+          fi
+
+      - name: Upload Contract reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contract-reports
+          path: |
+            target/contract-cucumber.json
+            target/contract-cucumber-report.html
+            target/allure-results/**
+            target/contract-rerun.txt
+            target/failed-html-report/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Cucumber Summary
+        if: always()
+        run: |
+          echo "# 🥒 Cucumber Summary - Contract" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: contract-reports" >> $GITHUB_STEP_SUMMARY

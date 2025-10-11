@@ -6,6 +6,9 @@ on:
 #  pull_request:
 #    branches: [ main ]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -14,6 +17,7 @@ jobs:
   api-tests:
     name: API Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
@@ -33,7 +37,7 @@ jobs:
         run: |
           mvn -B -ntp clean test \
           -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
-          -Dcucumber.filter.tags="@api"
+          -Dcucumber.features=src/test/resources/features/api
         env:
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
@@ -44,7 +48,7 @@ jobs:
           name: api-test-reports
           path: |
             target/cucumber-report.html
-            target/cucumber-reports/**/*
+            target/cucumber-html-reports/**/*
             target/surefire-reports/**/*
           if-no-files-found: ignore
           retention-days: 14
@@ -54,13 +58,21 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: api-allure-results
-          path: allure-results/
+          path: target/allure-results/**
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Suite Summary - API
+        if: always()
+        run: |
+          echo "# 🥒 Cucumber Summary - API" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: api-test-reports, api-allure-results" >> $GITHUB_STEP_SUMMARY
 
   ui-tests:
     name: UI Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
@@ -86,7 +98,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/chrome"
           mvn -B -ntp clean test \
           -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
-          -Dcucumber.filter.tags="@ui" \
+          -Dcucumber.features=src/test/resources/features/ui \
           -Dbrowser=chrome-headless
         env:
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
@@ -98,7 +110,7 @@ jobs:
           name: ui-test-reports
           path: |
             target/cucumber-report.html
-            target/cucumber-reports/**/*
+            target/cucumber-html-reports/**/*
             target/surefire-reports/**/*
           if-no-files-found: ignore
           retention-days: 14
@@ -108,7 +120,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ui-allure-results
-          path: allure-results/
+          path: target/allure-results/**
           if-no-files-found: ignore
           retention-days: 14
 
@@ -123,9 +135,17 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Suite Summary - UI
+        if: always()
+        run: |
+          echo "# 🥒 Cucumber Summary - UI" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: ui-test-reports, ui-allure-results (see ui-screenshots if present)" >> $GITHUB_STEP_SUMMARY
+
   accessibility-tests:
     name: Accessibility Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -146,7 +166,7 @@ jobs:
       - name: Run Accessibility Suite (Headless Chrome)
         run: |
           mvn -B -ntp clean test \
-            -Dcucumber.filter.tags="@accessibility" \
+            -Dcucumber.features=src/test/resources/features/accessibility \
             -Dbrowser=chrome-headless
 
       - name: Upload Accessibility Reports
@@ -162,11 +182,19 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: Suite Summary - Accessibility
+        if: always()
+        run: |
+          echo "# 🥒 Cucumber Summary - Accessibility" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: accessibility-reports" >> $GITHUB_STEP_SUMMARY
+
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
     needs: [api-tests, ui-tests, accessibility-tests]
     if: always()
+    timeout-minutes: 5
 
     steps:
       - name: Generate Summary
@@ -196,11 +224,11 @@ jobs:
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- API Test Reports: \`api-test-reports\`" >> $GITHUB_STEP_SUMMARY
-          echo "- API Allure Results: \`api-allure-results\`" >> $GITHUB_STEP_SUMMARY
-          echo "- UI Test Reports: \`ui-test-reports\`" >> $GITHUB_STEP_SUMMARY
-          echo "- UI Allure Results: \`ui-allure-results\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Accessibility Reports: \`accessibility-reports\`" >> $GITHUB_STEP_SUMMARY
+          echo "- API Test Reports: `api-test-reports`" >> $GITHUB_STEP_SUMMARY
+          echo "- API Allure Results: `api-allure-results`" >> $GITHUB_STEP_SUMMARY
+          echo "- UI Test Reports: `ui-test-reports`" >> $GITHUB_STEP_SUMMARY
+          echo "- UI Allure Results: `ui-allure-results`" >> $GITHUB_STEP_SUMMARY
+          echo "- Accessibility Reports: `accessibility-reports`" >> $GITHUB_STEP_SUMMARY
           
           # Fail if any job failed
           if [ "${{ needs.api-tests.result }}" != "success" ] || [ "${{ needs.ui-tests.result }}" != "success" ] || [ "${{ needs.accessibility-tests.result }}" != "success" ]; then

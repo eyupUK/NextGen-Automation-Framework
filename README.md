@@ -68,6 +68,47 @@ mvn clean test
 
 You can run these directly from your IDE or leave discovery to Maven Surefire (already configured in `pom.xml`).
 
+## CI (GitHub Actions)
+
+This repo includes production-ready workflows under `.github/workflows/`:
+
+- Cucumber test suites
+  - `cucumber-ui-api.yml` (UI + API)
+  - `cucumber-accessibility.yml`
+  - `cucumber-security.yml`
+  - `cucumber-contract.yml`
+  - `cucumber-performance.yml`
+  - Triggers: push and pull_request on main/master
+  - Reliability: failed scenarios are rerun via `FailedTestRunner` when a rerun list exists
+  - Artifacts: Cucumber HTML/JSON, Allure results, rerun files, and any failed HTML pages/screenshots
+  - Summary: each job writes a short “Cucumber Summary” to `$GITHUB_STEP_SUMMARY`
+
+- Performance and PR checks
+  - `performance-tests.yml`: flexible Gatling/JUnit runs (manual or on push), artifacts and summaries
+  - `nightly-performance.yml`: nightly batch with issue creation on failure and trend retention
+  - `pr-performance.yml`: quick 30s check on PRs with a PR comment and artifacts
+  - `stress-test.yml`: manual stress/spike tests, larger retention for reports and trends
+
+Notes
+- The legacy consolidated workflow `test-suites.yml` has been removed in favor of split, focused workflows.
+- Most workflows run with least-privilege permissions and concurrency to prevent overlapping runs.
+
+### Quick Links to GitHub Actions
+
+Replace `OWNER/REPO` with your GitHub org/user and repository:
+
+- All workflow runs: `https://github.com/OWNER/REPO/actions`
+- UI + API: `https://github.com/OWNER/REPO/actions/workflows/cucumber-ui-api.yml`
+- Accessibility: `https://github.com/OWNER/REPO/actions/workflows/cucumber-accessibility.yml`
+- Security: `https://github.com/OWNER/REPO/actions/workflows/cucumber-security.yml`
+- Contract: `https://github.com/OWNER/REPO/actions/workflows/cucumber-contract.yml`
+- Cucumber Performance: `https://github.com/OWNER/REPO/actions/workflows/cucumber-performance.yml`
+- CI (tagged API/UI/Accessibility): `https://github.com/OWNER/REPO/actions/workflows/ci.yml`
+- Performance Tests: `https://github.com/OWNER/REPO/actions/workflows/performance-tests.yml`
+- Nightly Performance: `https://github.com/OWNER/REPO/actions/workflows/nightly-performance.yml`
+- PR Performance: `https://github.com/OWNER/REPO/actions/workflows/pr-performance.yml`
+- Stress Test: `https://github.com/OWNER/REPO/actions/workflows/stress-test.yml`
+
 ## Security Test Suite
 
 This project includes a Cucumber-based security suite for both the public website (SauceDemo) and the Weather API.

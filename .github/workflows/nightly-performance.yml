@@ -12,7 +12,7 @@ on:
       notify_on_failure:
         description: 'Send notification on failure'
         required: false
-        default: 'true'
+        default: true
         type: boolean
 
 permissions:
@@ -20,10 +20,15 @@ permissions:
   issues: write
   pull-requests: write
 
+concurrency:
+  group: nightly-perf-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   nightly-load-test:
     name: Nightly Load Test
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
@@ -114,6 +119,13 @@ jobs:
           echo "- 📈 Performance Trends (365 days retention)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Note:** Download artifacts to view detailed metrics and charts" >> $GITHUB_STEP_SUMMARY
+
+      - name: Suite Summary - Nightly Performance
+        if: always()
+        run: |
+          echo "# 💤 Suite Summary - Nightly Performance" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: nightly-performance-reports-${{ github.run_number }}, performance-trends-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Check for Performance Degradation
         if: always()

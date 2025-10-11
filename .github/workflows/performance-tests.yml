@@ -32,10 +32,15 @@ permissions:
   issues: write
   pull-requests: write
 
+concurrency:
+  group: performance-tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   gatling-performance-tests:
     name: Gatling Performance Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
@@ -44,7 +49,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Build/install with Java 21
       - name: Set up Java 21 (build)
         uses: actions/setup-java@v4
         with:
@@ -53,7 +57,7 @@ jobs:
           cache: 'maven'
 
       - name: Cache Maven dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -63,14 +67,12 @@ jobs:
       - name: Install dependencies (no tests)
         run: mvn -B -ntp clean install -DskipTests
 
-      # Switch to Java 17 ONLY for Gatling runs
       - name: Set up Java 17 (Gatling)
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 🔑 Recompile tests/simulations for JDK 17 so Gatling can load them
       - name: Recompile tests for JDK 17 (Gatling)
         run: |
           mvn -B -ntp clean test-compile \
@@ -133,22 +135,10 @@ jobs:
           echo "- Download artifacts to view detailed Gatling HTML reports" >> $GITHUB_STEP_SUMMARY
           echo "- Reports include: Response times, throughput, percentiles, charts" >> $GITHUB_STEP_SUMMARY
 
-      - name: Comment PR with Results
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '🎯 **Performance Tests Completed**\n\nTest Type: ${{ env.TEST_TYPE }}\nUsers: ${{ env.USERS }}\n\nDownload artifacts to view detailed reports.'
-            })
-
   junit-performance-tests:
     name: JUnit Performance Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
@@ -164,7 +154,7 @@ jobs:
           cache: 'maven'
 
       - name: Cache Maven dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -199,11 +189,19 @@ jobs:
           path: target/performance-results/*.csv
           retention-days: 90
 
+      - name: Suite Summary - JUnit Performance
+        if: always()
+        run: |
+          echo "# 🧪 Suite Summary - JUnit Performance" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: junit-performance-results-${{ github.run_number }}, performance-metrics-csv-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+
   performance-comparison:
     name: Performance Comparison
     runs-on: ubuntu-latest
     needs: [gatling-performance-tests]
     if: always()
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code

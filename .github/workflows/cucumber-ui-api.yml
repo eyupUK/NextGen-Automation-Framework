@@ -1,0 +1,72 @@
+name: UI + API Tests (CukesRunner)
+
+on:
+  push:
+    branches: [ main, master ]
+#  pull_request:
+#    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ui_api:
+    name: UI + API (CukesRunner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Build and run Cucumber tests
+        id: test
+        continue-on-error: true
+        run: mvn -B -V -Dheadless=true -Dtest=CukesRunner test
+
+      - name: Rerun failed scenarios (if any)
+        if: ${{ steps.test.conclusion == 'failure' }}
+        run: |
+          # FailedTestRunner looks for target/rerun.txt, ensure it exists
+          if [ -f target/rerun.txt ]; then
+            echo "Found rerun file: target/rerun.txt"
+          else
+            echo "No rerun.txt found; exiting rerun step"
+            exit 0
+          fi
+          mvn -B -Dheadless=true -Dtest=FailedTestRunner test
+
+      - name: Upload Cucumber reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-api-reports
+          path: |
+            target/ui-api.json
+            target/ui-api-report.html
+            target/allure-results/**
+            target/cucumber-html-reports/**
+            target/rerun.txt
+            target/failed-html-report/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Cucumber Summary
+        if: always()
+        run: |
+          echo "# 🥒 Cucumber Summary - UI + API" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: ui-api-reports" >> $GITHUB_STEP_SUMMARY
