@@ -76,6 +76,7 @@ jobs:
       - name: Recompile tests for JDK 17 (Gatling)
         run: |
           mvn -B -ntp clean test-compile \
+            -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -DskipTests \
             -Dmaven.compiler.testRelease=17
 
@@ -98,6 +99,7 @@ jobs:
         if: env.SIMULATION == 'weather' || env.SIMULATION == 'all'
         run: |
           mvn -B -ntp gatling:test \
+            -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ env.USERS }} \
             -Dperf.duration=${{ env.DURATION }} \
@@ -168,7 +170,7 @@ jobs:
         run: mkdir -p target/performance-results
 
       - name: Run JUnit Performance Tests
-        run: mvn -B -ntp test -Dtest=WeatherApiPerformanceTest -Dsla.p95.ms=2000 -Dsla.p99.ms=4000 -Dsla.successRate=95
+        run: mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest -Dsla.p95.ms=2000 -Dsla.p99.ms=4000 -Dsla.successRate=95
         continue-on-error: true
 
       - name: Upload Test Results

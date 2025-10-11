@@ -18,6 +18,8 @@ jobs:
     name: UI + API (CukesRunner)
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    env:
+      WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,7 +37,9 @@ jobs:
       - name: Build and run Cucumber tests
         id: test
         continue-on-error: true
-        run: mvn -B -V -Dheadless=true -Dtest=CukesRunner test
+        run: mvn -B -V -Dheadless=true \
+            -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+            -Dtest=CukesRunner test
 
       - name: Rerun failed scenarios (if any)
         if: ${{ steps.test.conclusion == 'failure' }}
@@ -47,7 +51,9 @@ jobs:
             echo "No rerun.txt found; exiting rerun step"
             exit 0
           fi
-          mvn -B -Dheadless=true -Dtest=FailedTestRunner test
+          mvn -B -Dheadless=true \
+          -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+          -Dtest=FailedTestRunner test
 
       - name: Upload Cucumber reports
         uses: actions/upload-artifact@v4

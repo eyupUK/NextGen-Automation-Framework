@@ -18,6 +18,8 @@ jobs:
     name: Security (SecurityCukesRunner)
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    env:
+      WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,14 +37,18 @@ jobs:
       - name: Run Security tests
         id: test
         continue-on-error: true
-        run: mvn -B -Dheadless=true -Dtest=SecurityCukesRunner test
+        run: mvn -B -Dheadless=true \
+          -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+          -Dtest=SecurityCukesRunner test
 
       - name: Rerun failed scenarios (if any)
         if: ${{ steps.test.conclusion == 'failure' }}
         run: |
           if [ -f target/security-rerun.txt ]; then
             cp target/security-rerun.txt target/rerun.txt
-            mvn -B -Dheadless=true -Dtest=FailedTestRunner test
+            mvn -B -Dheadless=true \
+              -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+              -Dtest=FailedTestRunner test
           else
             echo "No security rerun file found"
           fi

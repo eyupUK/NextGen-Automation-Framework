@@ -70,6 +70,7 @@ jobs:
         run: |
           echo "🔥 Running Weather API Stress Test..."
           mvn -B -ntp gatling:test \
+            -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ github.event.inputs.max_users || '100' }} \
             -Dperf.duration=${{ github.event.inputs.duration || '180' }} \
@@ -98,7 +99,7 @@ jobs:
         id: junit-stress
         run: |
           echo "🔥 Running JUnit Stress Test..."
-          mvn -B -ntp test -Dtest=WeatherApiPerformanceTest#testForecastEndpointStress \
+          mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest#testForecastEndpointStress \
             -Dperf.users=${{ github.event.inputs.max_users || '100' }}
         continue-on-error: true
 
@@ -269,6 +270,7 @@ jobs:
         run: |
           echo "⚡ Running Spike Test..."
           mvn -B -ntp gatling:test \
+            -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ github.event.inputs.max_users || '100' }} \
             -Dperf.type=spike
@@ -283,7 +285,7 @@ jobs:
 
       - name: Run JUnit Spike Test
         run: |
-          mvn -B -ntp test -Dtest=WeatherApiPerformanceTest#testSpikeLoad
+          mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest#testSpikeLoad
         continue-on-error: true
 
       - name: Upload Spike Test Reports
