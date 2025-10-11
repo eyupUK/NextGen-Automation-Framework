@@ -1,4 +1,4 @@
-@performance
+@performance @api
 Feature: Performance smoke checks
 
   As a performance engineer

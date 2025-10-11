@@ -32,7 +32,7 @@ Feature: Public Demo JWT API security checks (EscuelaJS)
   Scenario: Use the JWT token in an API request
     Given I have a JWT bearer token
     When I call a protected demo endpoint with the token
-    Then the response status code is 200
+    Then the status code is 200
 
   @negative
   Scenario: Authentication fails with incorrect password
@@ -44,4 +44,4 @@ Feature: Public Demo JWT API security checks (EscuelaJS)
   Scenario: Protected endpoint rejects tampered (invalid/expired-like) token
     Given I have a JWT bearer token
     When I call a protected demo endpoint with a tampered token
-    Then the response status is one of 401 or 403
+    Then the status is one of 401 or 403

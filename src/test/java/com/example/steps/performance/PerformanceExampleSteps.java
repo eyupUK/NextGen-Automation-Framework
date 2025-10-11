@@ -44,5 +44,7 @@ public class PerformanceExampleSteps {
         }
         assertNull("Performance example failed: " + (lastError == null ? "" : lastError.getMessage()), lastError);
     }
+
 }
+
 

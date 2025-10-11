@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 import static io.restassured.RestAssured.given;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**

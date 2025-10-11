@@ -1,16 +1,10 @@
 package com.example.runners;
 
+
 import io.cucumber.junit.Cucumber;
 import io.cucumber.junit.CucumberOptions;
 import org.junit.runner.RunWith;
 
-/**
- * This class is a JUnit runner for Cucumber tests. It is annotated with {@link RunWith} and {@link CucumberOptions} annotations.
- * The {@link CucumberOptions} annotation specifies the configuration for the Cucumber test runner.
- *
- * @author eyupUK
- * @version 1.0
- */
 @RunWith(Cucumber.class)
 @CucumberOptions(
 
@@ -27,15 +21,15 @@ import org.junit.runner.RunWith;
         */
         plugin = {
                 "pretty", "io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm",
-                "json:target/ui-api.json",
-                "html:target/ui-api-report.html",
+                "json:target/cucumber.json",
+                "html:target/cucumber-report.html",
                 "rerun:target/rerun.txt",
                 "me.jvt.cucumber.report.PrettyReports"
         },
-        features = { "src/test/resources/features/api", "src/test/resources/features/ui" }, // only UI and API tests will be executed
+        features = "src/test/resources/features",
         glue = "com/example/steps",
         dryRun = false,
-        tags = "" // ("@ui and @regression") or "@api" or @wip
+        tags = ""
 )
-public class CukesRunner {
+public class AllCukesRunner {
 }

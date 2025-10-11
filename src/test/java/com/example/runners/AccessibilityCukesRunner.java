@@ -8,16 +8,16 @@ import org.junit.runner.RunWith;
 @CucumberOptions(
         plugin = {
                 "pretty", "io.qameta.allure.cucumber6jvm.AllureCucumber6Jvm",
-                "json:target/security-cucumber.json",
-                "html:target/security-cucumber-report.html",
-                "rerun:target/security-rerun.txt",
+                "json:target/cucumber-accessibility.json",
+                "html:target/cucumber-accessibility-report.html",
+                "rerun:target/rerun-accessibility.txt",
                 "me.jvt.cucumber.report.PrettyReports"
         },
-        features = "src/test/resources/features/security",
+        features = "src/test/resources/accessibility", // only accessibility tests will be executed
         glue = "com/example/steps",
-        dryRun = false,
-        tags = "@oauth or @jwt"
+        tags = "",
+        dryRun = false
 )
-public class SecurityRunner {
+public class AccessibilityCukesRunner {
 }
 

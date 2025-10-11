@@ -166,14 +166,14 @@ public class JwtSecuritySteps {
                 .get("/auth/profile");
     }
 
-    @Then("the response status is 200")
-    public void the_response_status_is_200() {
+    @Then("the status is 200")
+    public void the_status_is_200() {
         assertNotNull("No response captured", response);
         assertEquals(200, response.statusCode());
     }
 
-    @Then("the response status code is {int}")
-    public void the_response_status_code_is(int expected) {
+    @Then("the status code is {int}")
+    public void the_status_code_is(int expected) {
         assertNotNull("No response captured", response);
         assertEquals(expected, response.statusCode());
     }
@@ -231,8 +231,8 @@ public class JwtSecuritySteps {
                 .get("/auth/profile");
     }
 
-    @Then("the response status is one of 401 or 403")
-    public void the_response_status_is_one_of_401_or_403() {
+    @Then("the status is one of 401 or 403")
+    public void the_status_is_one_of_401_or_403() {
         assertNotNull("No response captured", response);
         int sc = response.statusCode();
         assertTrue("Expected 401 or 403, got: " + sc, sc == 401 || sc == 403);

@@ -61,8 +61,8 @@ mvn clean test
 ### Runners
 
 - UI/API default: `com.example.runners.CukesRunner`
-- Accessibility only: `com.example.runners.AccessibilityRunner` (tags: `@accessibility`)
-- Security suite: `com.example.runners.SecurityRunner` (tags: `@security`)
+- Accessibility only: `com.example.runners.AccessibilityCukesRunner` (tags: `@accessibility`)
+- Security suite: `com.example.runners.SecurityCukesRunner` (tags: `@security`)
 - Performance (JUnit suite): `com.example.runners.PerformanceRunner`
 - Performance (Cucumber): `com.example.runners.PerformanceCukesRunner` (default tags: `@performance`)
 

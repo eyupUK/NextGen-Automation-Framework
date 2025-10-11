@@ -26,6 +26,28 @@
     </properties>
     <build>
         <plugins>
+<!--            <plugin>-->
+<!--                <groupId>net.masterthought</groupId>-->
+<!--                <artifactId>maven-cucumber-reporting</artifactId>-->
+<!--                <version>5.6.0</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>execution</id>-->
+<!--                        <phase>verify</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>generate</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <projectName>Cucumber HTML Reports</projectName>-->
+<!--                            <outputDirectory>${project.build.directory}</outputDirectory>-->
+<!--                            <inputDirectory>${project.build.directory}</inputDirectory>-->
+<!--                            <jsonFiles>-->
+<!--                                <param>**/cucumber*.json</param>-->
+<!--                            </jsonFiles>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -36,10 +58,8 @@
 <!--                    <threadCount>4</threadCount>-->
                     <perCoreThreadCount>false</perCoreThreadCount>
                     <includes>
-                        <include>**/CukesRunner.java</include>
+                        <include>**/AllCukesRunner.java</include>
                         <include>**/FailedTestRunner.java</include>
-                        <include>**/AccessibilityRunner.java</include>
-                        <include>**/SecurityRunner.java</include>
                     </includes>
                     <systemPropertyVariables>
                         <!-- Headless mode toggle: -Dheadless=true -->
@@ -48,9 +68,9 @@
                         <cucumber.filter.tags>${cucumber.filter.tags}</cucumber.filter.tags>
                     </systemPropertyVariables>
                     <!-- Exclude performance tests from regular test runs -->
-                    <excludes>
-                        <exclude>**/performance/**</exclude>
-                    </excludes>
+<!--                    <excludes>-->
+<!--                        <exclude>**/performance/**</exclude>-->
+<!--                    </excludes>-->
                 </configuration>
             </plugin>
 
