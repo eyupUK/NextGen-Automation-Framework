@@ -3,7 +3,7 @@ name: Security Tests
 on:
   workflow_dispatch:
   push:
-    branches: [ main, complete-ci-implementation ]
+    branches: [ main ]
 #  pull_request:
 #    branches: [ main ]
 

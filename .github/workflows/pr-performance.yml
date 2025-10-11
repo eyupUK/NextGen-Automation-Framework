@@ -2,7 +2,7 @@ name: PR Performance Check
 
 on:
   pull_request:
-    branches: [ main, master, develop, complete-ci-implementation ]
+    branches: [ main, master, develop ]
     paths:
       - 'src/**'
       - 'pom.xml'

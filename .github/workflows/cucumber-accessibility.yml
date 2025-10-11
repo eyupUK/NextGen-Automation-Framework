@@ -2,7 +2,7 @@ name: Accessibility Tests (AccessibilityCukesRunner)
 
 on:
   push:
-    branches: [ main, master, complete-ci-implementation ]
+    branches: [ main, master ]
 #  pull_request:
 #    branches: [ main, master ]
 
