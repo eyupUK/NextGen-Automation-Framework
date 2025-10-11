@@ -19,7 +19,7 @@ public class WeatherApiInvalidLocationPactTest {
     // Let Pact pick a free port; it will start/stop the mock server for you
     @Rule
     public PactProviderRule mockProvider =
-            new PactProviderRule("WeatherAPI", "localhost", 8084, this);
+            new PactProviderRule("WeatherAPI", "localhost", 0, this);
 
     @Pact(consumer = "QAFrameworkConsumer")
     public RequestResponsePact invalidLocationPact(PactDslWithProvider builder) {

@@ -181,19 +181,32 @@ The starter feature lives at `src/test/resources/features/performance/perf_smoke
 
 ## Contract Testing (Pact)
 
-Consumer-driven contract testing is supported via Pact JVM (JUnit 4):
+Consumer-driven contract testing is supported via Pact JVM (JUnit 4). Pact tests live under `src/test/java/com/example/contract`.
 
-- Sample test: `com.example.contract.WeatherApiConsumerPactTest`
-- Generate pact file under `target/pacts/QAFrameworkConsumer-WeatherProvider.json`:
+- Provider name: `WeatherAPI`
+- Mock server: Pact starts on a free local port (no hardcoded ports); tests use `mockProvider.getUrl()`
+- Pact output: `target/pacts/QAFrameworkConsumer-WeatherAPI.json`
 
+### Current test coverage
+- Current weather by city: `WeatherApiConsumerPactTest` (London)
+- Current weather by coordinates: `WeatherApiCoordinatesPactTest` (48.8567,2.3508 → Paris)
+- Current weather by ZIP/postal code: `WeatherApiZipCodePactTest` (90201 → Bell Gardens)
+- 3-day forecast: `WeatherApiForecastPactTest` (London)
+- Error: missing query parameter: `WeatherApiErrorsPactTest` (400, code 1003)
+- Error: invalid/unknown location: `WeatherApiInvalidLocationPactTest` (400, code 1006)
+- Error: bulk request not allowed on free plan: `WeatherApiBulkRequestPactTest` (POST, 400, code 2009)
+
+### Running contract tests
 ```bash
-mvn -Dtest=WeatherApiConsumerPactTest test
-```
-
-Use profile `contract` to run only Pact tests matching `*PactTest.java`:
-
-```bash
+# Run all Pact tests via profile (includes **/*PactTest.java)
 mvn -Pcontract test
+
+# Or limit to contract tests by package/pattern
+mvn -Dtest='com.example.contract.*PactTest' test
+
+# Using Maven Wrapper (optional)
+./mvnw -Pcontract test
+./mvnw -Dtest='com.example.contract.*PactTest' test
 ```
 
 Share the generated pact with the provider service (or a Pact Broker) for verification.

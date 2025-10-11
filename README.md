@@ -222,52 +222,36 @@ The starter feature lives at `src/test/resources/features/performance/perf_smoke
 
 ## Contract Testing (Pact)
 
-This framework includes a comprehensive Pact consumer test suite for the Weather API: `com.example.contract.WeatherApiConsumerPactTest`.
+This repository includes a Pact JVM consumer test suite for the Weather API under `src/test/java/com/example/contract`.
 
-### Test Coverage
-The contract test suite includes 4 comprehensive scenarios:
-- **Current weather (London)** - Basic weather data retrieval
-- **Current weather with AQI (London)** - Air quality data inclusion
-- **City not found error (UnknownCity)** - Error handling validation
-- **3-day forecast (London)** - Forecast data structure verification
+- Provider name: `WeatherAPI`
+- Mock server: Pact starts on a free local port (no hardcoded ports); tests use `mockProvider.getUrl()`
+- Pact output: `target/pacts/QAFrameworkConsumer-WeatherAPI.json`
 
-### Running Contract Tests
+### Current test coverage
+- Current weather by city: `WeatherApiConsumerPactTest` (London)
+- Current weather by coordinates: `WeatherApiCoordinatesPactTest` (48.8567,2.3508 → Paris)
+- Current weather by ZIP/postal code: `WeatherApiZipCodePactTest` (90201 → Bell Gardens)
+- 3-day forecast: `WeatherApiForecastPactTest` (London)
+- Error: missing query parameter: `WeatherApiErrorsPactTest` (400, code 1003)
+- Error: invalid/unknown location: `WeatherApiInvalidLocationPactTest` (400, code 1006)
+- Error: bulk request not allowed on free plan: `WeatherApiBulkRequestPactTest` (POST, 400, code 2009)
 
+### Running contract tests
 ```bash
-# All consumer pact tests
+# Run all Pact tests via profile (includes **/*PactTest.java)
 mvn -Pcontract test
 
-# Only the Weather API consumer pact test
-mvn -Pcontract -Dtest=WeatherApiConsumerPactTest test
+# or
+mvn -Dtest=ContractRunner test
+
+# Or limit to contract tests by package/pattern
+mvn -Dtest='com.example.contract.*PactTest' test
+
+# Using Maven Wrapper (optional)
+./mvnw -Pcontract test
+./mvnw -Dtest='com.example.contract.*PactTest' test
 ```
-
-### Investigation Results
-
-**✅ Framework Status:**
-- Contract test framework is properly configured and dependencies are resolved
-- All 4 test scenarios are properly defined with comprehensive API contract specifications
-- Proper Maven profile setup for isolated contract testing
-- Comprehensive API contract definitions for Weather API
-- PACT dependencies have been corrected and are compatible with Java 21
-
-### Technical Details
-
-**Test Coverage:**
-The contract test suite includes 4 comprehensive scenarios covering the Weather API:
-1. **Current weather (London)** - Basic weather data retrieval with location and temperature validation
-2. **Current weather with AQI (London)** - Air quality data inclusion with CO and NO2 metrics
-3. **City not found error (UnknownCity)** - Error handling validation for invalid city requests
-4. **3-day forecast (London)** - Forecast data structure verification with date patterns and temperature ranges
-
-**Dependencies Fixed:**
-- Removed non-existent `au.com.dius.pact.consumer:java8` dependency
-- Using stable PACT version 4.6.13 with core dependencies: `junit`, `model`, and `support`
-- All dependencies are available in Maven Central and compatible with Java 21
-
-**Contract Specifications:**
-- Uses PACT DSL for robust API contract definitions
-- Proper request/response matching with flexible matchers
-- Error scenario coverage for comprehensive API validation
 
 ## Further Reading
 

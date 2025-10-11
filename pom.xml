@@ -279,12 +279,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>au.com.dius.pact.consumer</groupId>
-            <artifactId>junit5</artifactId>
-            <version>4.1.11</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>au.com.dius.pact.core</groupId>
             <artifactId>model</artifactId>
             <version>4.1.11</version>
@@ -296,13 +290,7 @@
             <version>4.1.11</version>
             <scope>test</scope>
         </dependency>
-        <!-- JUnit 5 for modern PACT extension support -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
-            <scope>test</scope>
-        </dependency>
+        <!-- Removed JUnit 5 to avoid engine conflicts during Pact runs -->
     </dependencies>
 
     <profiles>
