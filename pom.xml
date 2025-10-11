@@ -26,28 +26,31 @@
     </properties>
     <build>
         <plugins>
-<!--            <plugin>-->
-<!--                <groupId>net.masterthought</groupId>-->
-<!--                <artifactId>maven-cucumber-reporting</artifactId>-->
-<!--                <version>5.6.0</version>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>execution</id>-->
-<!--                        <phase>verify</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>generate</goal>-->
-<!--                        </goals>-->
-<!--                        <configuration>-->
-<!--                            <projectName>Cucumber HTML Reports</projectName>-->
-<!--                            <outputDirectory>${project.build.directory}</outputDirectory>-->
-<!--                            <inputDirectory>${project.build.directory}</inputDirectory>-->
-<!--                            <jsonFiles>-->
-<!--                                <param>**/cucumber*.json</param>-->
-<!--                            </jsonFiles>-->
-<!--                        </configuration>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.3.2</version>
+                <configuration>
+                    <!-- 'target' (project.build.directory) is cleaned by default; below cleans extra dirs if present -->
+                    <filesets>
+                        <fileset>
+                            <directory>${project.basedir}/allure-results</directory>
+                            <includes>
+                                <include>**/*</include>
+                            </includes>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                        <fileset>
+                            <directory>${project.basedir}/allure-report</directory>
+                            <includes>
+                                <include>**/*</include>
+                            </includes>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -66,6 +69,8 @@
 <!--                        <headless>${headless}</headless>-->
                         <!-- CI tag selection: override with -Dcucumber.filter.tags=@jwt or via profile -->
                         <cucumber.filter.tags>${cucumber.filter.tags}</cucumber.filter.tags>
+                        <!-- Force Allure adapter to write to the standard results directory -->
+                        <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                     </systemPropertyVariables>
                     <!-- Exclude performance tests from regular test runs -->
 <!--                    <excludes>-->
@@ -242,6 +247,7 @@
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-cucumber6-jvm</artifactId>
             <version>2.21.0</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- it is ignoring slf4j logs  https://mvnrepository.com/artifact/org.slf4j/slf4j-nop -->

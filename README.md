@@ -61,8 +61,8 @@ mvn clean test
 ### Runners
 
 - UI/API default: `com.example.runners.CukesRunner`
-- Accessibility only: `com.example.runners.AccessibilityCukesRunner` (tags: `@accessibility`)
-- Security suite: `com.example.runners.SecurityCukesRunner` (tags: `@security`)
+- Accessibility only: `com.example.runners.AccessibilityRunner` (tags: `@accessibility`)
+- Security suite: `com.example.runners.SecurityRunner` (tags: `@security`)
 - Performance (JUnit suite): `com.example.runners.PerformanceRunner`
 - Performance (Cucumber): `com.example.runners.PerformanceCukesRunner` (default tags: `@performance`)
 
@@ -156,6 +156,11 @@ mvn clean test -Dcucumber.filter.tags='@accessibility'
 - Cucumber HTML: `target/cucumber-report.html`
 - Cucumber JSON: `target/cucumber.json`
 - Allure results: `target/allure-results/`
+  - Produced when running Cucumber runners (e.g., `AllCukesRunner`, `ConractCukesRunner`). Pact-only JUnit runs via `-Pcontract` do not emit Allure results unless you add the Allure JUnit adapter.
+  - Generate Allure HTML report with Maven:
+    ```bash
+    mvn io.qameta.allure:allure-maven:report
+    ```
 
 View Allure locally:
 
@@ -242,15 +247,24 @@ This repository includes a Pact JVM consumer test suite for the Weather API unde
 # Run all Pact tests via profile (includes **/*PactTest.java)
 mvn -Pcontract test
 
-# or
-mvn -Dtest=ContractRunner test
-
 # Or limit to contract tests by package/pattern
 mvn -Dtest='com.example.contract.*PactTest' test
 
 # Using Maven Wrapper (optional)
 ./mvnw -Pcontract test
 ./mvnw -Dtest='com.example.contract.*PactTest' test
+```
+
+### BDD Contract Scenarios (Cucumber)
+You can run the same Pact tests through Cucumber BDD for unified reporting and tagging.
+
+- Feature: `src/test/resources/features/contract/weather_api_contracts.feature`
+- Runner: `com.example.runners.ConractCukesRunner` (targets `@contract` tag)
+
+Run examples:
+```bash
+mvn -Dtest=ConractCukesRunner test
+./mvnw -Dtest=ConractCukesRunner test
 ```
 
 ## Further Reading

@@ -40,6 +40,21 @@ mvn -Dtest='com.example.contract.*PactTest' test
 After a successful run, pact files are written to:
 - `target/pacts/QAFrameworkConsumer-WeatherAPI.json`
 
+## BDD Contract Scenarios (Cucumber)
+You can also run the consumer contracts through Cucumber BDD scenarios for unified reporting and tagging.
+
+- Feature: `src/test/resources/features/contract/weather_api_contracts.feature`
+- Runner: `com.example.runners.ConractCukesRunner` (tagged `@contract`)
+
+Run examples:
+```bash
+# Run the BDD contract scenarios (uses @contract tag by default)
+mvn -Dtest=ConractCukesRunner test
+
+# With Maven Wrapper
+./mvnw -Dtest=ConractCukesRunner test
+```
+
 ## Mock server usage
 Tests rely on the Pact mock server started by `PactProviderRule`. The base URL is obtained via `mockProvider.getUrl()`. This avoids hardcoded base URIs and allows tests to run reliably in parallel or on shared CI agents.
 
@@ -60,7 +75,7 @@ If you have a real provider service, verify it against the generated pacts. Exam
 @RunWith(au.com.dius.pact.provider.junit.PactRunner.class)
 @Provider("WeatherAPI")
 @PactFolder("target/pacts") // Or use @PactBroker
-public class WeatherProviderPactTest {
+public class WeatherAPIPactTest {
 
   @TestTarget
   public final Target target = new HttpTarget("http", "localhost", 8080, "/");
@@ -91,7 +106,7 @@ public class WeatherProviderPactTest {
 Run provider verification after starting your service on port 8080:
 
 ```bash
-mvn -Dtest=WeatherProviderPactTest test
+mvn -Dtest=WeatherAPIPactTest test
 ```
 
 ## Pact Broker (optional)
