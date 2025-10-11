@@ -35,9 +35,7 @@ jobs:
 
       - name: Run API Tests
         run: |
-          mvn -B -ntp clean test \
-          -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
-          -Dcucumber.features=src/test/resources/features/api
+          mvn -B -ntp clean test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dcucumber.features=src/test/resources/features/api
         env:
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
@@ -100,8 +98,6 @@ jobs:
           -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
           -Dcucumber.features=src/test/resources/features/ui \
           -Dbrowser=chrome-headless
-        env:
-          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
       - name: Upload UI Test Reports
         if: always()
