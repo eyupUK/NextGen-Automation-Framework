@@ -37,9 +37,7 @@ jobs:
       - name: Build and run Cucumber tests
         id: test
         continue-on-error: true
-        run: mvn -B -V -Dheadless=true \
-            -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
-            -Dtest=CukesRunner test
+        run: mvn -B -V -Dheadless=true -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=CukesRunner test
 
       - name: Rerun failed scenarios (if any)
         if: ${{ steps.test.conclusion == 'failure' }}
@@ -51,9 +49,7 @@ jobs:
             echo "No rerun.txt found; exiting rerun step"
             exit 0
           fi
-          mvn -B -Dheadless=true \
-          -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
-          -Dtest=FailedTestRunner test
+          mvn -B -Dheadless=true -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=FailedTestRunner test
 
       - name: Debug - List target contents (if artifacts missing)
         if: always()

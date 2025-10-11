@@ -76,6 +76,13 @@ jobs:
             -Dperf.users=15 \
             -Dperf.rampup=20
 
+      - name: Debug - List target contents (Nightly)
+        if: always()
+        run: |
+          echo "Listing target directory (if exists):" && ls -la target || true
+          echo "\nGatling results:" && ls -la target/gatling-results 2>/dev/null || true
+          echo "\nAllure results:" && ls -la target/allure-results 2>/dev/null || true
+
       - name: Upload Nightly Reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -125,7 +132,7 @@ jobs:
       - name: Suite Summary - Nightly Performance
         if: always()
         run: |
-          echo "# 💤 Suite Summary - Nightly Performance" >> $GITHUB_STEP_SUMMARY
+          echo "# 😴 Suite Summary - Nightly Performance" >> $GITHUB_STEP_SUMMARY
           echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "Artifacts: nightly-performance-reports-${{ github.run_number }}, performance-trends-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
 
