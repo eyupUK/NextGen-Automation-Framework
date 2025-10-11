@@ -19,7 +19,7 @@ on:
         default: false
         type: boolean
   push:
-    branches: [ main, master ]
+    branches: [ main, master, complete-ci-implementation ]
 
 permissions:
   contents: read

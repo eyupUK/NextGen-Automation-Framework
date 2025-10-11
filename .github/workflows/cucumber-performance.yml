@@ -2,7 +2,7 @@ name: Performance Tests (PerformanceCukesRunner)
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, complete-ci-implementation ]
 #  pull_request:
 #    branches: [ main, master ]
 
