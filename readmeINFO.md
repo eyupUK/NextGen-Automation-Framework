@@ -1,6 +1,6 @@
 # Java • JUnit • Cucumber • Selenium • Rest Assured • aXe • JWT OAuth Owasp  • Gatling • Pact
 
-- Quick Links: [README.md](README.md) (quick start) • [HOW_TO_RUN_PERFORMANCE_TESTS.md](HOW_TO_RUN_PERFORMANCE_TESTS.md) (performance guide)
+- Quick Links: [README.md](README.md) (quick start) • [HOW_TO_RUN_PERFORMANCE_TESTS.md](docs/HOW_TO_RUN_PERFORMANCE_TESTS.md) (performance guide)
 
 This repository provides a unified automation framework for UI, API, accessibility, security baseline, and performance testing using Java 21, Maven, Selenium, Cucumber, Rest Assured, axe-core/selenium, and Gatling.
 
