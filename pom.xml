@@ -61,7 +61,7 @@
 <!--                    <threadCount>4</threadCount>-->
                     <perCoreThreadCount>false</perCoreThreadCount>
                     <includes>
-                        <include>**/*CukesRunner.java</include>
+                        <include>**/*AllCukesRunner.java</include>
                         <include>**/FailedTestRunner.java</include>
                     </includes>
                     <systemPropertyVariables>
