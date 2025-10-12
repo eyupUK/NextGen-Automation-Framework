@@ -39,7 +39,8 @@ chmod +x run-performance-tests.sh
 ./run-performance-tests.sh ecommerce-api
 ./run-performance-tests.sh all-gatling
 
-# With parameters
+# With parameters -u users, -r ramp-up seconds, -d duration seconds, -t test type (load, stress, spike)
+./run-performance-tests.sh -u 20 -t load weather-api
 ./run-performance-tests.sh -u 30 -r 20 -d 120 -t stress weather-api
 
 # Open latest report anytime

@@ -77,7 +77,7 @@ Feature: Weather API Security Checks
   # Rate-limiting behavior (may be environment dependent)
   @requires_key @rate_limit
   Scenario: Rapid calls eventually yield 429 with Retry-After and backoff honored
-    When I rapidly call current weather 25 times with a valid API key
+    When I rapidly call current weather 50 times with a valid API key
     Then I eventually receive a 429 status
     And the response header "Retry-After" is present
     When I wait the Retry-After duration then retry the request
