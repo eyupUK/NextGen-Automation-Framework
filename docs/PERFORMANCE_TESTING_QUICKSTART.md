@@ -24,11 +24,15 @@ mvn clean install -DskipTests
 chmod +x run-performance-tests.sh
 
 # Run a simple load test (Weather API requires WEATHER_API_KEY)
-./run-performance-tests.sh weather-api
+./run-performance-tests.sh            # defaults to weather-api and auto-opens report
 
 # Run with custom parameters
 ./run-performance-tests.sh -u 20 -t stress weather-api
 ```
+
+The script now:
+- Defaults to `weather-api` when no command is provided
+- Automatically opens the latest Gatling HTML report after `weather-api`, `ecommerce-api`, and `all-gatling`
 
 #### Option B: Using Maven Directly
 ```bash
@@ -38,6 +42,18 @@ mvn gatling:test -Dgatling.simulationClass=com.example.performance.gatling.simul
 # Run JUnit-based performance tests
 mvn test -Dtest=WeatherApiPerformanceTest
 ```
+
+#### Option C: Programmatic Gatling Runner (JUnit/Main)
+Run Gatling without the Maven plugin using `GatlingTestsRunner`.
+```bash
+# Run both default simulations via JUnit
+mvn -Dtest=GatlingTestsRunner test
+
+# Run a specific simulation
+mvn -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
+    -Dtest=GatlingTestsRunner test
+```
+From IDE: run `com.example.runners.GatlingTestsRunner` main (optionally pass the simulation class as the first arg or via `-Dgatling.simulationClass=...`).
 
 ### Step 3: View Results
 

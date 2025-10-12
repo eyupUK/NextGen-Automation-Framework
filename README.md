@@ -17,7 +17,7 @@ A unified test automation framework built with Java 21, Maven, Cucumber, Seleniu
 ```bash
 # 1) Clone and enter the project
 git clone <your-repo-url>
-cd qa-assessment-Eyup-Tozcu
+cd <your-repo-directory>
 
 # 2) Create your local config from the template
 cp configuration.properties.template configuration.properties
@@ -240,6 +240,28 @@ mvn gatling:test \
   -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=5 -Dperf.duration=30
 ```
+
+- Convenience script: `./run-performance-tests.sh` now defaults to `weather-api` when no command is provided and automatically opens the latest Gatling HTML report after `weather-api`, `ecommerce-api`, and `all-gatling` runs.
+- To open the last report anytime: `./run-performance-tests.sh report`
+
+### Programmatic Gatling Runner (JUnit/Main)
+
+You can run Gatling simulations without the Maven plugin using a lightweight runner.
+
+- JUnit (via Surefire):
+  ```bash
+  mvn -Dtest=GatlingTestsRunner test
+  ```
+- Select a specific simulation:
+  ```bash
+  mvn -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
+      -Dtest=GatlingTestsRunner test
+  ```
+- From IDE/CLI main method:
+  - Run `com.example.runners.GatlingTestsRunner` (optionally pass the simulation class as the first arg or via `-Dgatling.simulationClass=...`).
+
+Notes
+- The Gatling Maven Plugin is configured with `<includes>` to allow multiple simulations. You can still target a single simulation with `-Dgatling.simulationClass=...` on the CLI.
 
 ### Performance Testing (JUnit Runner)
 

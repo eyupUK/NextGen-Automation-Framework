@@ -1,4 +1,4 @@
-# 🚀 Running Performance Tests Locally - Quick Guide
+ur# 🚀 Running Performance Tests Locally - Quick Guide
 
 ## ⚡ Quick Start (Easiest Way)
 
@@ -17,6 +17,34 @@ This will:
 - ✅ Use your API key from the environment
 - ✅ Run a quick 30-second test with 5 users
 - ✅ Open the HTML report when done
+
+---
+
+## 🔧 Alternative: Full Runner Script (auto-opens report)
+
+Use the full script for more control. It now defaults to `weather-api` when no command is provided and automatically opens the latest Gatling HTML report after `weather-api`, `ecommerce-api`, and `all-gatling` runs.
+
+```bash
+# Set API key for Weather API tests
+export WEATHER_API_KEY=your_api_key
+
+# Make sure it's executable (one time)
+chmod +x run-performance-tests.sh
+
+# Default (no command): runs Weather API and opens report
+./run-performance-tests.sh
+
+# Explicit commands
+./run-performance-tests.sh weather-api
+./run-performance-tests.sh ecommerce-api
+./run-performance-tests.sh all-gatling
+
+# With parameters
+./run-performance-tests.sh -u 30 -r 20 -d 120 -t stress weather-api
+
+# Open latest report anytime
+./run-performance-tests.sh report
+```
 
 ---
 
@@ -42,9 +70,31 @@ mvn gatling:test \
 ```
 
 ### 3. View the Report
+The script opens the report automatically. If you’re running Maven directly, open it manually:
 ```bash
 open target/gatling-results/*/index.html
 ```
+
+---
+
+## 🧪 Programmatic Gatling Runner (JUnit/Main)
+
+Run Gatling simulations without the Maven plugin using `GatlingTestsRunner`.
+
+- Run both default simulations (Weather + Ecommerce) via JUnit:
+```bash
+mvn -Dtest=GatlingTestsRunner test
+```
+
+- Run a single simulation:
+```bash
+mvn -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
+    -Dtest=GatlingTestsRunner test
+```
+
+- From IDE: run `com.example.runners.GatlingTestsRunner` main (optionally pass the simulation class as the first arg or via `-Dgatling.simulationClass=...`).
+
+Note: The Gatling Maven Plugin is configured with `<includes>` to allow multiple simulations. You can still target one with `-Dgatling.simulationClass=...`.
 
 ---
 
@@ -175,7 +225,8 @@ chmod +x run-performance-tests.sh
 # View help
 ./run-performance-tests.sh --help
 
-# Run tests
+# Run tests (auto-opens report when finished)
+./run-performance-tests.sh            # defaults to weather-api
 ./run-performance-tests.sh weather-api
 ./run-performance-tests.sh -u 20 -t stress weather-api
 ./run-performance-tests.sh -u 30 -r 20 -d 120 weather-api
@@ -218,7 +269,7 @@ export WEATHER_API_KEY=your_api_key
 5. Users make API calls to Weather API with your key
 6. Metrics are collected (response times, throughput, errors)
 7. HTML report is generated in `target/gatling-results/`
-8. Report opens automatically in your browser
+8. Report opens automatically in your browser (scripts do this for you)
 
 ---
 
