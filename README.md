@@ -1,4 +1,4 @@
-# QA Automation Framework: UI • API • Security • Accessibility • Performance • Contract Testing
+# QA Automation Framework: API • Contract • UI • Security • Accessibility • Performance Testing
 
 A unified test automation framework built with Java 21, Maven, Cucumber, Selenium, Rest Assured, axe-core/selenium, and Gatling. It supports BDD-style scenarios for UI and API testing, security header checks, accessibility scanning, and performance load tests.
 
