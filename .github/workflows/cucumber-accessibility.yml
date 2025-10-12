@@ -2,7 +2,7 @@ name: Accessibility Tests (AccessibilityCukesRunner)
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, complete-ci-implementation ]
 #  pull_request:
 #    branches: [ main, master ]
 
@@ -38,6 +38,7 @@ jobs:
         run: mvn -B -Dheadless=true -Dtest=AccessibilityCukesRunner test
 
       - name: Rerun failed scenarios (if any)
+        id: rerun
         if: ${{ steps.test.conclusion == 'failure' }}
         run: |
           # Map job-specific rerun file to the default path expected by FailedTestRunner
@@ -61,6 +62,15 @@ jobs:
             target/failed-html-report/**
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Finalize job status
+        if: always()
+        run: |
+          if [ "${{ steps.test.conclusion }}" = "failure" ]; then
+            if [ "${{ steps.rerun.conclusion }}" != "success" ]; then
+              echo "Accessibility tests failed and rerun did not succeed. Failing job." && exit 1
+            fi
+          fi
 
       - name: Cucumber Summary
         if: always()

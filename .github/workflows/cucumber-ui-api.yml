@@ -2,7 +2,7 @@ name: UI + API Tests (CukesRunner)
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, complete-ci-implementation ]
 #  pull_request:
 #    branches: [ main, master ]
 
@@ -37,9 +37,12 @@ jobs:
       - name: Build and run Cucumber tests
         id: test
         continue-on-error: true
-        run: mvn -B -V -Dheadless=true -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=CukesRunner test
+        run: mvn -B -V -Dheadless=true \
+            -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+            -Dtest=CukesRunner test
 
       - name: Rerun failed scenarios (if any)
+        id: rerun
         if: ${{ steps.test.conclusion == 'failure' }}
         run: |
           # FailedTestRunner looks for target/rerun.txt, ensure it exists
@@ -49,7 +52,9 @@ jobs:
             echo "No rerun.txt found; exiting rerun step"
             exit 0
           fi
-          mvn -B -Dheadless=true -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=FailedTestRunner test
+          mvn -B -Dheadless=true \
+          -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+          -Dtest=FailedTestRunner test
 
       - name: Debug - List target contents (if artifacts missing)
         if: always()
@@ -79,6 +84,15 @@ jobs:
             target/failed-html-report/**
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Finalize job status
+        if: always()
+        run: |
+          if [ "${{ steps.test.conclusion }}" = "failure" ]; then
+            if [ "${{ steps.rerun.conclusion }}" != "success" ]; then
+              echo "Tests failed and rerun did not succeed. Failing job." && exit 1
+            fi
+          fi
 
       - name: Cucumber Summary
         if: always()
