@@ -1,6 +1,6 @@
-# Java • JUnit • Cucumber • Selenium • Rest Assured • aXe • JWT OAuth Owasp  • Gatling • Pact
+# Java • JUnit • Cucumber • Selenium • Rest Assured • aXe • JWT • OAuth • Owasp • Gatling • Pact
 
-- Quick Links: [README.md](README.md) (quick start) • [HOW_TO_RUN_PERFORMANCE_TESTS.md](docs/HOW_TO_RUN_PERFORMANCE_TESTS.md) (performance guide)
+- Quick Links: [README.md](README.md) (quick start) • [HOW_TO_RUN_PERFORMANCE_TESTS.md](docs/HOW_TO_RUN_PERFORMANCE_TESTS.md) (performance guide) • [GITHUB_ACTIONS_SETUP_COMPLETE.md](docs/GITHUB_ACTIONS_SETUP_COMPLETE.md) (GitHub Actions setup) • [GITHUB_ACTIONS_PERFORMANCE.md](docs/GITHUB_ACTIONS_PERFORMANCE.md) (performance CI guide)
 
 This repository provides a unified automation framework for UI, API, accessibility, security baseline, and performance testing using Java 21, Maven, Selenium, Cucumber, Rest Assured, axe-core/selenium, and Gatling.
 
@@ -19,9 +19,13 @@ This repository provides a unified automation framework for UI, API, accessibili
 - API testing with Rest Assured (data-driven from CSV/JSON)
 - Accessibility checks with axe-core/selenium (@accessibility)
 - Security baseline checks for headers on web and API endpoints (@security)
+- Contract testing with Pact JVM (consumer-driven)
+- Test execution with JUnit (runners and suites)
 - Parallel execution via Surefire
 - Reporting: Cucumber JSON/HTML, PrettyReports, Allure
 - Performance testing with Gatling (Weather API, etc.)
+- Built and orchestrated with Maven (profiles for contract/performance)
+- GitHub Actions integration (setup and performance CI guides in docs)
 
 ## Project Structure
 
