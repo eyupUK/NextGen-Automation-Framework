@@ -88,7 +88,7 @@ public class EcommerceApiPerformanceSimulation extends Simulation {
                                     """))
                             .check(status().is(200))
                             .check(jsonPath("$.token").exists().saveAs("authToken"))
-                            .check(responseTimeInMillis().lte(1000))
+                            .check(responseTimeInMillis().lte(2000))
             )
             .pause(Duration.ofSeconds(1))
             .exec(

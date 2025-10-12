@@ -69,22 +69,40 @@ jobs:
         id: weather-stress
         run: |
           echo "🔥 Running Weather API Stress Test..."
+          set +e
           mvn -B -ntp gatling:test \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ github.event.inputs.max_users || '100' }} \
             -Dperf.duration=${{ github.event.inputs.duration || '180' }} \
             -Dperf.type=stress
-        continue-on-error: true
+          EXIT_CODE=$?
+          echo "exit_code=${EXIT_CODE}" >> "$GITHUB_OUTPUT"
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "Weather API Stress Test failed with exit code $EXIT_CODE"
+          else
+            echo "Weather API Stress Test passed"
+          fi
+          # Do not fail the step to allow subsequent steps and analysis to run
+          exit 0
 
       - name: E-commerce API Stress Test
         id: ecommerce-stress
         run: |
           echo "🔥 Running E-commerce API Stress Test..."
+          set +e
           mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=${{ github.event.inputs.max_users || '100' }}
-        continue-on-error: true
+          EXIT_CODE=$?
+          echo "exit_code=${EXIT_CODE}" >> "$GITHUB_OUTPUT"
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "E-commerce API Stress Test failed with exit code $EXIT_CODE"
+          else
+            echo "E-commerce API Stress Test passed"
+          fi
+          # Do not fail the step to allow subsequent steps and analysis to run
+          exit 0
 
 
       # (JUnit can stay on Java 17 or switch back to 21 if you prefer; 17 is fine)
@@ -99,9 +117,18 @@ jobs:
         id: junit-stress
         run: |
           echo "🔥 Running JUnit Stress Test..."
+          set +e
           mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest#testForecastEndpointStress \
             -Dperf.users=${{ github.event.inputs.max_users || '100' }}
-        continue-on-error: true
+          EXIT_CODE=$?
+          echo "exit_code=${EXIT_CODE}" >> "$GITHUB_OUTPUT"
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "JUnit Stress Test failed with exit code $EXIT_CODE"
+          else
+            echo "JUnit Stress Test passed"
+          fi
+          # Do not fail the step to allow subsequent steps and analysis to run
+          exit 0
 
       - name: Debug - List target contents (Stress)
         if: always()
@@ -122,9 +149,9 @@ jobs:
           echo "- Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Tests Executed:**" >> $GITHUB_STEP_SUMMARY
-          echo "- Weather API Stress Test" >> $GITHUB_STEP_SUMMARY
-          echo "- E-commerce API Stress Test" >> $GITHUB_STEP_SUMMARY
-          echo "- JUnit Stress Test" >> $GITHUB_STEP_SUMMARY
+          echo "- Weather API Stress Test (exit: ${{ steps.weather-stress.outputs.exit_code || 'N/A' }})" >> $GITHUB_STEP_SUMMARY
+          echo "- E-commerce API Stress Test (exit: ${{ steps.ecommerce-stress.outputs.exit_code || 'N/A' }})" >> $GITHUB_STEP_SUMMARY
+          echo "- JUnit Stress Test (exit: ${{ steps.junit-stress.outputs.exit_code || 'N/A' }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Key Metrics to Review:**" >> $GITHUB_STEP_SUMMARY
           echo "- Error rate under maximum load" >> $GITHUB_STEP_SUMMARY
@@ -148,6 +175,7 @@ jobs:
             target/surefire-reports/
             target/performance-results/
           retention-days: 60
+          if-no-files-found: warn
 
       - name: Generate Performance Trend Data
         if: always()
@@ -165,6 +193,7 @@ jobs:
           name: stress-test-trends-${{ github.run_number }}
           path: stress-test-trends/
           retention-days: 365
+          if-no-files-found: warn
 
       - name: Create Summary Report
         if: always()
@@ -213,7 +242,12 @@ jobs:
         if: always()
         run: |
           echo "# 🧪 Suite Summary - Stress Test" >> $GITHUB_STEP_SUMMARY
-          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          FAILED=0
+          [ "${{ steps.weather-stress.outputs.exit_code }}" != "0" ] && FAILED=1 || true
+          [ "${{ steps.ecommerce-stress.outputs.exit_code }}" != "0" ] && FAILED=1 || true
+          [ "${{ steps.junit-stress.outputs.exit_code }}" != "0" ] && FAILED=1 || true
+          if [ "$FAILED" -eq 0 ]; then STATUS="success"; else STATUS="failure"; fi
+          echo "Result: ${STATUS}" >> $GITHUB_STEP_SUMMARY
           echo "Artifacts: stress-test-reports-${{ github.run_number }}, stress-test-trends-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Post Results Comment (if triggered manually)
@@ -239,6 +273,20 @@ jobs:
             4. Update capacity plans if needed`;
             
             console.log(summary);
+
+      - name: Fail job if any stress tests failed
+        if: always()
+        run: |
+          failed=0
+          if [ "${{ steps.weather-stress.outputs.exit_code }}" != "0" ]; then echo "Weather API Stress Test failed"; failed=1; fi
+          if [ "${{ steps.ecommerce-stress.outputs.exit_code }}" != "0" ]; then echo "E-commerce API Stress Test failed"; failed=1; fi
+          if [ "${{ steps.junit-stress.outputs.exit_code }}" != "0" ]; then echo "JUnit Stress Test failed"; failed=1; fi
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more stress tests failed. Failing job.";
+            exit 1;
+          else
+            echo "All stress tests passed.";
+          fi
 
   spike-test:
     name: Spike Testing
@@ -275,14 +323,23 @@ jobs:
         run: mvn -B -ntp clean test-compile -DskipTests -Dmaven.compiler.testRelease=17
 
       - name: Run Spike Test
+        id: spike-gatling
         run: |
           echo "⚡ Running Spike Test..."
+          set +e
           mvn -B -ntp gatling:test \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ github.event.inputs.max_users || '100' }} \
             -Dperf.type=spike
-        continue-on-error: true
+          EXIT_CODE=$?
+          echo "exit_code=${EXIT_CODE}" >> "$GITHUB_OUTPUT"
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "Spike Gatling test failed with exit code $EXIT_CODE"
+          else
+            echo "Spike Gatling test passed"
+          fi
+          exit 0
 
       # Switch back to Java 21 for JUnit (main classes were built for 21)
       - name: Set up Java 21 (JUnit)
@@ -292,9 +349,18 @@ jobs:
           distribution: 'temurin'
 
       - name: Run JUnit Spike Test
+        id: spike-junit
         run: |
+          set +e
           mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest#testSpikeLoad
-        continue-on-error: true
+          EXIT_CODE=$?
+          echo "exit_code=${EXIT_CODE}" >> "$GITHUB_OUTPUT"
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "Spike JUnit test failed with exit code $EXIT_CODE"
+          else
+            echo "Spike JUnit test passed"
+          fi
+          exit 0
 
       - name: Upload Spike Test Reports
         if: always()
@@ -303,6 +369,7 @@ jobs:
           name: spike-test-reports-${{ github.run_number }}
           path: target/gatling-results/
           retention-days: 30
+          if-no-files-found: warn
 
       - name: Spike Test Summary
         if: always()
@@ -317,10 +384,22 @@ jobs:
           echo "- System recovery time" >> $GITHUB_STEP_SUMMARY
           echo "- Error handling under spike" >> $GITHUB_STEP_SUMMARY
           echo "- Auto-scaling behavior (if applicable)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          FAILED=0
+          [ "${{ steps.spike-gatling.outputs.exit_code }}" != "0" ] && FAILED=1 || true
+          [ "${{ steps.spike-junit.outputs.exit_code }}" != "0" ] && FAILED=1 || true
+          if [ "$FAILED" -eq 0 ]; then STATUS="success"; else STATUS="failure"; fi
+          echo "Result: ${STATUS}" >> $GITHUB_STEP_SUMMARY
 
-      - name: Suite Summary - Spike Test
+      - name: Fail job if any spike tests failed
         if: always()
         run: |
-          echo "# ⚡ Suite Summary - Spike Test" >> $GITHUB_STEP_SUMMARY
-          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "Artifacts: spike-test-reports-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          failed=0
+          if [ "${{ steps.spike-gatling.outputs.exit_code }}" != "0" ]; then echo "Spike Gatling test failed"; failed=1; fi
+          if [ "${{ steps.spike-junit.outputs.exit_code }}" != "0" ]; then echo "Spike JUnit test failed"; failed=1; fi
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more spike tests failed. Failing job.";
+            exit 1;
+          else
+            echo "Spike tests passed.";
+          fi

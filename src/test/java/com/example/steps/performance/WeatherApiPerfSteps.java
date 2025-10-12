@@ -84,16 +84,6 @@ public class WeatherApiPerfSteps {
     }
 
 
-    @Then("it completes successfully loading weather data")
-    public void itCompletesSuccessfullyLoadingWeatherData() throws Exception {
-        if (lastError != null) {
-            lastError.printStackTrace();
-        }
-        assertNull("Performance example failed: " + (lastError == null ? "" : lastError.getMessage()), lastError);
-        new WeatherApiPerformanceTest().tearDown();
-    }
-
-
     @Then("it completes successfully performance testing of weather api")
     public void itCompletesSuccessfullyPerformanceTestingOfWeatherApi() throws Exception {
         if (lastError != null) {
