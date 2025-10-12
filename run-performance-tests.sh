@@ -21,6 +21,14 @@ RAMPUP=10
 DURATION=60
 TEST_TYPE="load"
 
+# Optional API key flag for Maven (use array for safe quoting)
+mvn_args=()
+if [[ -n "$WEATHER_API_KEY" ]]; then
+  mvn_args+=( -DWEATHER_API_KEY="$WEATHER_API_KEY" )
+else
+  echo -e "${YELLOW}ℹ️ WEATHER_API_KEY not set in environment. Tests will fallback to configuration.properties if configured.${NC}"
+fi
+
 # Print colored message
 print_message() {
     color=$1
@@ -122,14 +130,14 @@ case $COMMAND in
         echo "  Test Type: $TEST_TYPE"
         print_message "$BLUE" "========================================="
 
-        mvn gatling:test \
+        mvn "${mvn_args[@]}" gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=$USERS \
             -Dperf.rampup=$RAMPUP \
             -Dperf.duration=$DURATION \
             -Dperf.type=$TEST_TYPE
 
-        print_message "$GREEN" "\n✓ Performance test completed!"
+        print_message "$GREEN" "\n✔ Performance test completed!"
         print_message "$YELLOW" "Report location: target/gatling-results/"
         ;;
 
@@ -147,7 +155,7 @@ case $COMMAND in
             -Dperf.users=$USERS \
             -Dperf.rampup=$RAMPUP
 
-        print_message "$GREEN" "\n✓ Performance test completed!"
+        print_message "$GREEN" "\n✔ Performance test completed!"
         ;;
 
     junit-perf)
@@ -155,11 +163,11 @@ case $COMMAND in
         print_message "$BLUE" "Running JUnit Performance Tests"
         print_message "$BLUE" "========================================="
 
-        mvn test -Dtest=WeatherApiPerformanceTest \
+        mvn "${mvn_args[@]}" test -Dtest=WeatherApiPerformanceTest \
             -Dperf.users=$USERS \
             -Dperf.duration=$DURATION
 
-        print_message "$GREEN" "\n✓ JUnit performance tests completed!"
+        print_message "$GREEN" "\n✔ JUnit performance tests completed!"
         print_message "$YELLOW" "Results: target/performance-results/"
         ;;
 
@@ -170,7 +178,7 @@ case $COMMAND in
 
         mvn gatling:test -Dperf.users=$USERS
 
-        print_message "$GREEN" "\n✓ All simulations completed!"
+        print_message "$GREEN" "\n✔ All simulations completed!"
         ;;
 
     report)
@@ -198,4 +206,3 @@ case $COMMAND in
 esac
 
 print_message "$GREEN" "\nDone! 🚀"
-

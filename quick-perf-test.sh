@@ -8,13 +8,17 @@
 echo "🚀 Starting Performance Test..."
 echo ""
 
-# Set the API key and other environment variables if needed
-# Example:
-#export WEATHER_API_KEY="your_api_key_here"
+# Prepare optional API key flag (use array for safe quoting)
+mvn_args=()
+if [[ -n "$WEATHER_API_KEY" ]]; then
+  mvn_args+=( -DWEATHER_API_KEY="$WEATHER_API_KEY" )
+else
+  echo "ℹ️ WEATHER_API_KEY env var not set. Tests will fallback to configuration.properties if configured."
+fi
 
 # Run the test
 echo "Running Weather API Performance Test with 5 users for 30 seconds..."
-mvn gatling:test \
+mvn "${mvn_args[@]}" gatling:test \
   -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=5 \
   -Dperf.rampup=5 \
@@ -38,4 +42,3 @@ else
     echo "❌ Performance test failed. Check the output above for errors."
     exit 1
 fi
-

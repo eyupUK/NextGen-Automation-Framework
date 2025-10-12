@@ -21,6 +21,13 @@ on:
   push:
     branches: [ main, master ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: stress-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   stress-test:
     name: API Stress Testing
@@ -63,6 +70,7 @@ jobs:
         run: |
           echo "🔥 Running Weather API Stress Test..."
           mvn -B -ntp gatling:test \
+            -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ github.event.inputs.max_users || '100' }} \
             -Dperf.duration=${{ github.event.inputs.duration || '180' }} \
@@ -91,9 +99,17 @@ jobs:
         id: junit-stress
         run: |
           echo "🔥 Running JUnit Stress Test..."
-          mvn -B -ntp test -Dtest=WeatherApiPerformanceTest#testForecastEndpointStress \
+          mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest#testForecastEndpointStress \
             -Dperf.users=${{ github.event.inputs.max_users || '100' }}
         continue-on-error: true
+
+      - name: Debug - List target contents (Stress)
+        if: always()
+        run: |
+          echo "Listing target directory (if exists):" && ls -la target || true
+          echo "\nGatling results:" && ls -la target/gatling-results 2>/dev/null || true
+          echo "\nSurefire reports:" && ls -la target/surefire-reports 2>/dev/null || true
+          echo "\nPerformance results:" && ls -la target/performance-results 2>/dev/null || true
 
       - name: Analyze Stress Test Results
         if: always()
@@ -193,6 +209,13 @@ jobs:
           
           cat stress-test-summary.md
 
+      - name: Suite Summary - Stress Test
+        if: always()
+        run: |
+          echo "# 🧪 Suite Summary - Stress Test" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: stress-test-reports-${{ github.run_number }}, stress-test-trends-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+
       - name: Post Results Comment (if triggered manually)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/github-script@v7
@@ -255,6 +278,7 @@ jobs:
         run: |
           echo "⚡ Running Spike Test..."
           mvn -B -ntp gatling:test \
+            -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ github.event.inputs.max_users || '100' }} \
             -Dperf.type=spike
@@ -269,7 +293,7 @@ jobs:
 
       - name: Run JUnit Spike Test
         run: |
-          mvn -B -ntp test -Dtest=WeatherApiPerformanceTest#testSpikeLoad
+          mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest#testSpikeLoad
         continue-on-error: true
 
       - name: Upload Spike Test Reports
@@ -294,3 +318,9 @@ jobs:
           echo "- Error handling under spike" >> $GITHUB_STEP_SUMMARY
           echo "- Auto-scaling behavior (if applicable)" >> $GITHUB_STEP_SUMMARY
 
+      - name: Suite Summary - Spike Test
+        if: always()
+        run: |
+          echo "# ⚡ Suite Summary - Spike Test" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: spike-test-reports-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY

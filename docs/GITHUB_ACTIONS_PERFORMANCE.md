@@ -191,6 +191,42 @@ gh run download <run-id> -n gatling-reports-123
 
 ---
 
+## 🔍 Debug Listing & Artifact Hardening
+
+To make artifact uploads resilient and easy to diagnose, the workflows now:
+
+- Print a directory listing after each test run (always):
+  - `target/`
+  - `target/gatling-results/` (Gatling)
+  - `target/allure-results/` (Cucumber/Allure)
+  - `target/surefire-reports/` (JUnit/Surefire)
+  - `target/cucumber-html-reports/` (PrettyReports)
+- Use broader artifact globs to capture default report names even if a runner-specific filename changes.
+
+This means that when an upload step says “No files found…”, the job log will show exactly which files exist in `target/`, so paths can be adjusted quickly if needed.
+
+## 🧩 Notes for Security Matrix Workflows
+
+In `security-tests.yml`, the job runs a matrix of two legs: `web` and `api`. The matrix is configured with `fail-fast: false`, so the API leg will still run and produce artifacts even if the web leg fails. This avoids losing API results due to an unrelated web failure.
+
+## 🧾 Maven CLI Multi-line Tip
+
+When you pass system properties with line continuations, ensure each line ends with a backslash and no trailing spaces—or prefer a single line. Incorrect continuation can cause the error `Unknown lifecycle phase`.
+
+Examples:
+
+```bash
+# Single line (recommended)
+mvn -B -V -Dheadless=true -DWEATHER_API_KEY="$WEATHER_API_KEY" -Dtest=CukesRunner test
+
+# Multi-line (correct)
+mvn -B -V -Dheadless=true \
+  -DWEATHER_API_KEY="$WEATHER_API_KEY" \
+  -Dtest=CukesRunner test
+```
+
+---
+
 ## 🎯 Usage Examples
 
 ### Example 1: Quick Performance Check Before Release
@@ -417,4 +453,3 @@ branches:
 **🎉 GitHub Actions Performance Testing Workflows Ready!**
 
 All workflows are configured and ready to use. Start with a manual run of the main performance test workflow to see it in action!
-

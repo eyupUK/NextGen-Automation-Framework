@@ -61,12 +61,62 @@ mvn clean test
 ### Runners
 
 - UI/API default: `com.example.runners.CukesRunner`
-- Accessibility only: `com.example.runners.AccessibilityRunner` (tags: `@accessibility`)
-- Security suite: `com.example.runners.SecurityRunner` (tags: `@security`)
+- Accessibility only: `com.example.runners.AccessibilityCukesRunner` (tags: `@accessibility`)
+- Security suite: `com.example.runners.SecurityCukesRunner` (tags: `@security`)
 - Performance (JUnit suite): `com.example.runners.PerformanceRunner`
 - Performance (Cucumber): `com.example.runners.PerformanceCukesRunner` (default tags: `@performance`)
 
-You can run these directly from your IDE or leave discovery to Maven Surefire (already configured in `pom.xml`).
+You can run these directly from your IDE or leave discovery to Maven Surefire (already configured to include `**/*CukesRunner.java` and `FailedTestRunner`).
+
+## CI (GitHub Actions)
+
+This repo includes production-ready workflows under `.github/workflows/`:
+
+- Cucumber test suites
+  - `cucumber-ui-api.yml` (UI + API)
+  - `cucumber-accessibility.yml`
+  - `cucumber-security.yml`
+  - `cucumber-contract.yml`
+  - `cucumber-performance.yml`
+  - Triggers: push and pull_request on main/master
+  - Reliability: failed scenarios are rerun via `FailedTestRunner` when a rerun list exists
+  - Artifacts: Cucumber HTML/JSON, Allure results, rerun files, and any failed HTML pages/screenshots
+  - Summary: each job writes a short “Cucumber Summary” to `$GITHUB_STEP_SUMMARY`
+  - Hardened uploads: each Cucumber workflow now prints a debug listing of `target/` and common report folders and uses broadened artifact globs (e.g., `target/cucumber*.{json,html}`, `target/allure-results/**`, `target/cucumber-html-reports/**`, `target/surefire-reports/**`) to reduce “No files found” surprises.
+
+- Performance and PR checks
+  - `performance-tests.yml`: flexible Gatling/JUnit runs (manual or on push), artifacts and summaries
+    - Hardened with debug listing of `target/gatling-results/`, `target/allure-results/`, and `target/surefire-reports/` before uploads.
+  - `nightly-performance.yml`: nightly batch with issue creation on failure and trend retention
+    - Also includes debug listing to diagnose missing artifacts quickly.
+  - `pr-performance.yml`: quick 30s check on PRs with a PR comment and artifacts
+    - Includes a debug listing of `target/gatling-results/` and `performance-output.log`.
+  - `stress-test.yml`: manual stress/spike tests, larger retention for reports and trends
+    - Includes debug listings for Gatling, Surefire, and performance result folders.
+
+- Security tests (matrix)
+  - `security-tests.yml` runs both web and API security legs via a matrix (target: `web`, `api`).
+  - fail-fast is explicitly set to `false` so the API leg will still run and produce artifacts even if the web leg fails.
+
+Notes
+- The legacy consolidated workflow `test-suites.yml` has been removed in favor of split, focused workflows.
+- Most workflows run with least-privilege permissions and concurrency to prevent overlapping runs.
+
+### Quick Links to GitHub Actions
+
+Replace `OWNER/REPO` with your GitHub org/user and repository:
+
+- All workflow runs: `https://github.com/OWNER/REPO/actions`
+- UI + API: `https://github.com/OWNER/REPO/actions/workflows/cucumber-ui-api.yml`
+- Accessibility: `https://github.com/OWNER/REPO/actions/workflows/cucumber-accessibility.yml`
+- Security: `https://github.com/OWNER/REPO/actions/workflows/cucumber-security.yml`
+- Contract: `https://github.com/OWNER/REPO/actions/workflows/cucumber-contract.yml`
+- Cucumber Performance: `https://github.com/OWNER/REPO/actions/workflows/cucumber-performance.yml`
+- CI (tagged API/UI/Accessibility): `https://github.com/OWNER/REPO/actions/workflows/ci.yml`
+- Performance Tests: `https://github.com/OWNER/REPO/actions/workflows/performance-tests.yml`
+- Nightly Performance: `https://github.com/OWNER/REPO/actions/workflows/nightly-performance.yml`
+- PR Performance: `https://github.com/OWNER/REPO/actions/workflows/pr-performance.yml`
+- Stress Test: `https://github.com/OWNER/REPO/actions/workflows/stress-test.yml`
 
 ## Security Test Suite
 
@@ -275,3 +325,16 @@ mvn -Dtest=ConractCukesRunner test
 ## Housekeeping
 
 - Allure results are generated under `target/allure-results/` during local runs. If you see a root-level `allure-results/` directory, it likely contains stale, committed artifacts from earlier runs. These have been removed and the directory is ignored going forward.
+
+### Maven CLI notes (multi-line usage)
+If you see `Unknown lifecycle phase` when using multi-line commands, it's almost always due to a bad line continuation. Either use a single line or ensure each line ends with a backslash with no trailing spaces. For example:
+
+```bash
+# Single line (recommended)
+mvn -B -V -Dheadless=true -DWEATHER_API_KEY="$WEATHER_API_KEY" -Dtest=CukesRunner test
+
+# Multi-line (correct)
+mvn -B -V -Dheadless=true \
+  -DWEATHER_API_KEY="$WEATHER_API_KEY" \
+  -Dtest=CukesRunner test
+```

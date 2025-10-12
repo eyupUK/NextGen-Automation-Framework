@@ -1,0 +1,70 @@
+name: Accessibility Tests (AccessibilityCukesRunner)
+
+on:
+  push:
+    branches: [ main, master ]
+#  pull_request:
+#    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: accessibility-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  accessibility:
+    name: Accessibility (AccessibilityCukesRunner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Run Accessibility tests
+        id: test
+        continue-on-error: true
+        run: mvn -B -Dheadless=true -Dtest=AccessibilityCukesRunner test
+
+      - name: Rerun failed scenarios (if any)
+        if: ${{ steps.test.conclusion == 'failure' }}
+        run: |
+          # Map job-specific rerun file to the default path expected by FailedTestRunner
+          if [ -f target/rerun-accessibility.txt ]; then
+            cp target/rerun-accessibility.txt target/rerun.txt
+            mvn -B -Dheadless=true -Dtest=FailedTestRunner test
+          else
+            echo "No accessibility rerun file found"
+          fi
+
+      - name: Upload Accessibility reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accessibility-reports
+          path: |
+            target/cucumber-accessibility.json
+            target/cucumber-accessibility-report.html
+            target/allure-results/**
+            target/rerun-accessibility.txt
+            target/failed-html-report/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Cucumber Summary
+        if: always()
+        run: |
+          echo "# 🥒 Cucumber Summary - Accessibility" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: accessibility-reports" >> $GITHUB_STEP_SUMMARY

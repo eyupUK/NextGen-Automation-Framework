@@ -1,9 +1,9 @@
 name: Nightly Performance Tests
 
 on:
-  #  schedule:
+  schedule:
   # Run every night at 2 AM UTC
-  #    - cron: '0 2 * * *'
+      - cron: '0 2 * * *'
   push:
     branches: [ main ]
 
@@ -12,7 +12,7 @@ on:
       notify_on_failure:
         description: 'Send notification on failure'
         required: false
-        default: 'true'
+        default: true
         type: boolean
 
 permissions:
@@ -20,10 +20,15 @@ permissions:
   issues: write
   pull-requests: write
 
+concurrency:
+  group: nightly-perf-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   nightly-load-test:
     name: Nightly Load Test
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
@@ -56,6 +61,7 @@ jobs:
       - name: Run Weather API Load Test
         run: |
           mvn -B -ntp gatling:test \
+            -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=20 \
             -Dperf.rampup=30 \
@@ -68,6 +74,13 @@ jobs:
             -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=15 \
             -Dperf.rampup=20
+
+      - name: Debug - List target contents (Nightly)
+        if: always()
+        run: |
+          echo "Listing target directory (if exists):" && ls -la target || true
+          echo "\nGatling results:" && ls -la target/gatling-results 2>/dev/null || true
+          echo "\nAllure results:" && ls -la target/allure-results 2>/dev/null || true
 
       - name: Upload Nightly Reports
         if: always()
@@ -114,6 +127,13 @@ jobs:
           echo "- 📈 Performance Trends (365 days retention)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Note:** Download artifacts to view detailed metrics and charts" >> $GITHUB_STEP_SUMMARY
+
+      - name: Suite Summary - Nightly Performance
+        if: always()
+        run: |
+          echo "# 😴 Suite Summary - Nightly Performance" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: nightly-performance-reports-${{ github.run_number }}, performance-trends-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Check for Performance Degradation
         if: always()
