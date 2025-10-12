@@ -99,22 +99,28 @@ jobs:
         id: weather-perf
         if: env.SIMULATION == 'weather' || env.SIMULATION == 'all'
         run: |
+          set +e
           mvn -B -ntp gatling:test \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ env.USERS }} \
             -Dperf.duration=${{ env.DURATION }} \
             -Dperf.type=${{ env.TEST_TYPE }}
-        continue-on-error: true
+          code=$?
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          exit 0
 
       - name: Run E-commerce API Performance Test
         id: ecommerce-perf
         if: env.SIMULATION == 'ecommerce' || env.SIMULATION == 'all'
         run: |
+          set +e
           mvn -B -ntp gatling:test \
             -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=${{ env.USERS }}
-        continue-on-error: true
+          code=$?
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          exit 0
 
       - name: Debug - List target contents (Gatling)
         if: always()
@@ -149,10 +155,11 @@ jobs:
       - name: Finalize job status (Gatling)
         if: always()
         run: |
-          # If any selected simulation failed, mark job failed (IDs may not exist if step skipped)
-          W_CONCL='${{ steps.weather-perf.conclusion }}'
-          E_CONCL='${{ steps.ecommerce-perf.conclusion }}'
-          if [ "$W_CONCL" = "failure" ] || [ "$E_CONCL" = "failure" ]; then
+          W_CODE='${{ steps.weather-perf.outputs.exitcode }}'
+          E_CODE='${{ steps.ecommerce-perf.outputs.exitcode }}'
+          [ -z "$W_CODE" ] && W_CODE=0
+          [ -z "$E_CODE" ] && E_CODE=0
+          if [ "$W_CODE" != "0" ] || [ "$E_CODE" != "0" ]; then
             echo "Gatling run failed. Failing job." && exit 1
           fi
 
@@ -190,8 +197,12 @@ jobs:
 
       - name: Run JUnit Performance Tests
         id: junit-perf
-        run: mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest -Dsla.p95.ms=2000 -Dsla.p99.ms=4000 -Dsla.successRate=95
-        continue-on-error: true
+        run: |
+          set +e
+          mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest -Dsla.p95.ms=2000 -Dsla.p99.ms=4000 -Dsla.successRate=95
+          code=$?
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          exit 0
 
       - name: Debug - List target contents (JUnit)
         if: always()
@@ -228,7 +239,9 @@ jobs:
       - name: Finalize job status (JUnit)
         if: always()
         run: |
-          if [ "${{ steps.junit-perf.conclusion }}" = "failure" ]; then
+          CODE='${{ steps.junit-perf.outputs.exitcode }}'
+          [ -z "$CODE" ] && CODE=0
+          if [ "$CODE" != "0" ]; then
             echo "JUnit performance run failed. Failing job." && exit 1
           fi
 
