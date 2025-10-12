@@ -248,7 +248,7 @@ jobs:
   performance-comparison:
     name: Performance Comparison
     runs-on: ubuntu-latest
-    needs: [gatling-performance-tests]
+    needs: [gatling-performance-tests, junit-performance-tests]
     if: always()
     timeout-minutes: 10
 
@@ -256,14 +256,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Current Results
+      - name: Download Current Gatling Results
         uses: actions/download-artifact@v4
         with:
           name: gatling-reports-${{ github.run_number }}
           path: current-results/
 
+      - name: Download JUnit CSV Metrics
+        uses: actions/download-artifact@v4
+        with:
+          name: performance-metrics-csv-${{ github.run_number }}
+          path: junit-csv/
+
       - name: Generate Comparison Report
         run: |
+          set +e
+          # Install jq for JSON parsing (used for Gatling stats)
+          sudo apt-get update -y >/dev/null 2>&1 && sudo apt-get install -y jq >/dev/null 2>&1 || true
+
           echo "# 📈 Performance Comparison Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Run Information:**" >> $GITHUB_STEP_SUMMARY
@@ -271,10 +281,105 @@ jobs:
           echo "- Triggered by: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Next Steps:**" >> $GITHUB_STEP_SUMMARY
-          echo "1. Download the artifacts to view detailed reports" >> $GITHUB_STEP_SUMMARY
-          echo "2. Compare with baseline metrics" >> $GITHUB_STEP_SUMMARY
-          echo "3. Investigate any performance regressions" >> $GITHUB_STEP_SUMMARY
+
+          # SLA thresholds (align with JUnit job)
+          P95_SLA=2000
+          P99_SLA=4000
+          SRATE_SLA=95
+
+          ############################
+          # Parse Gatling latest run #
+          ############################
+          G_TOTAL=""; G_OK=""; G_KO=""; G_MEAN=""; G_P95=""; G_P99=""; G_MAX=""; G_RPS=""; G_SRATE=""; G_DIR=""
+          if [ -d current-results ]; then
+            G_DIR=$(ls -1dt current-results/*/ 2>/dev/null | head -n 1)
+            if [ -n "$G_DIR" ]; then
+              if [ -f "$G_DIR/js/stats.json" ]; then
+                JSON_FILE="$G_DIR/js/stats.json"
+                G_TOTAL=$(jq -r '.stats.numberOfRequests.total' "$JSON_FILE")
+                G_OK=$(jq -r '.stats.numberOfRequests.ok' "$JSON_FILE")
+                G_KO=$(jq -r '.stats.numberOfRequests.ko' "$JSON_FILE")
+                G_MEAN=$(jq -r '.stats.meanResponseTime.total' "$JSON_FILE")
+                G_P95=$(jq -r '.stats.percentiles3.total' "$JSON_FILE")
+                G_P99=$(jq -r '.stats.percentiles4.total' "$JSON_FILE")
+                G_MAX=$(jq -r '.stats.maxResponseTime.total' "$JSON_FILE")
+                G_RPS=$(jq -r '.stats.meanNumberOfRequestsPerSecond.total' "$JSON_FILE")
+              elif [ -f "$G_DIR/js/stats.js" ]; then
+                JSON=$(sed -e '1s/var stats = //' -e '$s/;[[:space:]]*$//' "$G_DIR/js/stats.js" 2>/dev/null)
+                if command -v jq >/dev/null 2>&1 && [ -n "$JSON" ]; then
+                  G_TOTAL=$(echo "$JSON" | jq -r '.stats.numberOfRequests.total')
+                  G_OK=$(echo "$JSON" | jq -r '.stats.numberOfRequests.ok')
+                  G_KO=$(echo "$JSON" | jq -r '.stats.numberOfRequests.ko')
+                  G_MEAN=$(echo "$JSON" | jq -r '.stats.meanResponseTime.total')
+                  G_P95=$(echo "$JSON" | jq -r '.stats.percentiles3.total')
+                  G_P99=$(echo "$JSON" | jq -r '.stats.percentiles4.total')
+                  G_MAX=$(echo "$JSON" | jq -r '.stats.maxResponseTime.total')
+                  G_RPS=$(echo "$JSON" | jq -r '.stats.meanNumberOfRequestsPerSecond.total')
+                fi
+              fi
+            fi
+          fi
+          if [ -n "$G_TOTAL" ] && [ "$G_TOTAL" != "null" ] && [ "$G_TOTAL" != "" ]; then
+            G_SRATE=$(awk -v ok="$G_OK" -v total="$G_TOTAL" 'BEGIN{ if (total>0) printf "%.2f", (ok*100.0)/total; else print "0.00" }')
+          fi
+
+          ########################
+          # Parse JUnit CSV metrics
+          ########################
+          J_NAME=""; J_TOTAL=""; J_SUCCESS=""; J_ERRORS=""; J_ERRRATE=""; J_MEAN=""; J_MEDIAN=""; J_P95=""; J_P99=""; J_MAX=""; J_ACTIVE=""; J_SRATE=""
+          if ls -1 junit-csv/*.csv >/dev/null 2>&1; then
+            CSV_FILE=$(ls -1 junit-csv/*.csv | head -n 1)
+            # Skip header and read values
+            IFS=',' read -r J_NAME J_TOTAL J_SUCCESS J_ERRORS J_ERRRATE J_MEAN J_MEDIAN J_P95 J_P99 J_MAX J_ACTIVE < <(tail -n +2 "$CSV_FILE")
+            if [ -n "$J_TOTAL" ] && [ -n "$J_SUCCESS" ]; then
+              J_SRATE=$(awk -v ok="$J_SUCCESS" -v total="$J_TOTAL" 'BEGIN{ if (total>0) printf "%.2f", (ok*100.0)/total; else print "0.00" }')
+            fi
+          fi
+
+          ########################
+          # Write report to summary
+          ########################
+          echo "**SLA Thresholds:**" >> $GITHUB_STEP_SUMMARY
+          echo "- P95 <= ${P95_SLA} ms, P99 <= ${P99_SLA} ms, Success Rate >= ${SRATE_SLA}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Gatling Summary" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$G_TOTAL" ]; then
+            echo "- Results dir: ${G_DIR:-n/a}" >> $GITHUB_STEP_SUMMARY
+            echo "- Requests: total=${G_TOTAL}, ok=${G_OK:-0}, ko=${G_KO:-0}" >> $GITHUB_STEP_SUMMARY
+            echo "- Success Rate: ${G_SRATE:-n/a}%" >> $GITHUB_STEP_SUMMARY
+            echo "- Mean: ${G_MEAN:-n/a} ms, P95: ${G_P95:-n/a} ms, P99: ${G_P99:-n/a} ms, Max: ${G_MAX:-n/a} ms" >> $GITHUB_STEP_SUMMARY
+            echo "- Mean RPS: ${G_RPS:-n/a}" >> $GITHUB_STEP_SUMMARY
+            G_SLA=$(awk -v p95="${G_P95:-0}" -v p99="${G_P99:-0}" -v srate="${G_SRATE:-0}" -v P95="${P95_SLA}" -v P99="${P99_SLA}" -v S="${SRATE_SLA}" 'BEGIN{ if (p95!="" && p99!="" && srate!="" && p95<=P95 && p99<=P99 && srate>=S) print "Yes"; else print "No" }')
+            echo "- SLA met: ${G_SLA}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- No Gatling results found in artifacts." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## JUnit Summary" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$J_TOTAL" ]; then
+            echo "- CSV: ${CSV_FILE:-n/a}" >> $GITHUB_STEP_SUMMARY
+            echo "- Name: ${J_NAME}" >> $GITHUB_STEP_SUMMARY
+            echo "- Requests: total=${J_TOTAL}, ok=${J_SUCCESS:-0}, errors=${J_ERRORS:-0} (errorRate=${J_ERRRATE:-n/a}%)" >> $GITHUB_STEP_SUMMARY
+            echo "- Success Rate: ${J_SRATE:-n/a}%" >> $GITHUB_STEP_SUMMARY
+            echo "- Mean: ${J_MEAN:-n/a} ms, Median: ${J_MEDIAN:-n/a} ms, P95: ${J_P95:-n/a} ms, P99: ${J_P99:-n/a} ms, Max: ${J_MAX:-n/a} ms" >> $GITHUB_STEP_SUMMARY
+            J_SLA=$(awk -v p95="${J_P95:-0}" -v p99="${J_P99:-0}" -v srate="${J_SRATE:-0}" -v P95="${P95_SLA}" -v P99="${P99_SLA}" -v S="${SRATE_SLA}" 'BEGIN{ if (p95!="" && p99!="" && srate!="" && p95<=P95 && p99<=P99 && srate>=S) print "Yes"; else print "No" }')
+            echo "- SLA met: ${J_SLA}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- No JUnit CSV metrics found in artifacts." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Overall Verdict" >> $GITHUB_STEP_SUMMARY
+          if [ "${G_SLA}" = "Yes" ] && [ "${J_SLA}" = "Yes" ]; then
+            echo "Both Gatling and JUnit performance met the configured SLAs." >> $GITHUB_STEP_SUMMARY
+          elif [ "${G_SLA}" = "Yes" ] || [ "${J_SLA}" = "Yes" ]; then
+            echo "Partial pass: At least one suite met SLAs. Review the failing suite's metrics above." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "SLAs not met by either suite. Investigate regressions and bottlenecks." >> $GITHUB_STEP_SUMMARY
+          fi
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Artifacts Available:**" >> $GITHUB_STEP_SUMMARY
           echo "- 📊 Gatling HTML Reports (interactive charts)" >> $GITHUB_STEP_SUMMARY
