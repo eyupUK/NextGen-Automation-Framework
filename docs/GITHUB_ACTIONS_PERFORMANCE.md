@@ -387,7 +387,14 @@ branches:
 
 ## 🛠️ Troubleshooting
 
+For detailed troubleshooting guidance, see [Troubleshooting Performance Tests](TROUBLESHOOTING_PERFORMANCE_TESTS.md).
+
 ### Common Issues
+
+**Issue: HTTP Status Code Mismatches**
+- Example: `status.find.is(200), but actually found 201`
+- Solution: Update test assertions to match actual API behavior
+- See: [Troubleshooting Guide - HTTP Status Codes](TROUBLESHOOTING_PERFORMANCE_TESTS.md#1-http-status-code-mismatches)
 
 **Issue: Workflow fails to start**
 - Check if workflows are enabled in repo settings
@@ -416,6 +423,7 @@ branches:
 ### Documentation Files
 - `PERFORMANCE_TESTING_QUICKSTART.md` - Getting started
 - `docs/PERFORMANCE_TESTING.md` - Comprehensive guide
+- `docs/TROUBLESHOOTING_PERFORMANCE_TESTS.md` - Troubleshooting guide
 - `DEMO_RESULTS.md` - Example test results
 
 ### GitHub Actions Documentation
