@@ -31,7 +31,7 @@ public class PerformanceConfig {
 
 
     // SLA Thresholds (in milliseconds)
-    public static final int RESPONSE_TIME_P95_THRESHOLD = 3000; // 95th percentile
+    public static final int RESPONSE_TIME_P95_THRESHOLD = 2000; // 95th percentile
     public static final int RESPONSE_TIME_P99_THRESHOLD = 5000; // 99th percentile
     public static final double SUCCESS_RATE_THRESHOLD = 99.0; // Success rate percentage
 
