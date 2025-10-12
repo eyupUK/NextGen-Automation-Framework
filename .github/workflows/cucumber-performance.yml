@@ -35,9 +35,7 @@ jobs:
       - name: Run Performance Cucumber tests
         id: test
         continue-on-error: true
-        run: mvn -B -Dheadless=true \
-          -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
-          -Dtest=PerformanceCukesRunner test
+        run: mvn -B -Dheadless=true -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=PerformanceCukesRunner test
 
       - name: Rerun failed scenarios (if any)
         id: rerun
@@ -45,9 +43,7 @@ jobs:
         run: |
           if [ -f target/perf-rerun.txt ]; then
             cp target/perf-rerun.txt target/rerun.txt
-            mvn -B -Dheadless=true \
-          -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
-          -Dtest=FailedTestRunner test
+            mvn -B -Dheadless=true -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=FailedTestRunner test
           else
             echo "No performance rerun file found"
           fi
