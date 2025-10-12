@@ -10,12 +10,54 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  pull-requests: write
+  issues: write
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      a11y_changed: ${{ steps.filter.outputs.accessibility }}
+    steps:
+      - name: Paths filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          token: ${{ github.token }}
+          filters: |
+            accessibility:
+              - 'src/test/resources/features/accessibility/**'
+              - 'src/test/java/**/accessibility/**'
+              - 'pom.xml'
+
+  plan-a11y:
+    name: Plan Accessibility matrix
+    runs-on: ubuntu-latest
+    needs: [changes]
+    outputs:
+      run: ${{ steps.plan.outputs.run }}
+      browsers: ${{ steps.plan.outputs.browsers }}
+    steps:
+      - name: Compute run conditions and matrix
+        id: plan
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const labels = (context.payload.pull_request?.labels || []).map(l => (l.name || '').toLowerCase());
+            const hasA11yLabel = labels.some(n => n.includes('accessibility') || n.includes('a11y'));
+            const crossBrowser = labels.some(n => n.includes('cross') || n.includes('browser'));
+            const changed = '${{ needs.changes.outputs.a11y_changed }}' === 'true';
+            const run = context.eventName === 'push' || hasA11yLabel || changed;
+            const browsers = crossBrowser ? ['chrome-headless','chrome'] : ['chrome-headless'];
+            core.setOutput('run', String(run));
+            core.setOutput('browsers', JSON.stringify(browsers));
+
   api-tests:
     name: API Tests
     runs-on: ubuntu-latest
@@ -37,26 +79,34 @@ jobs:
 
       - name: Run API Tests
         id: test
-        continue-on-error: true
         run: |
+          set +e
           mvn -B -ntp clean test \
           -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
           -Dcucumber.features=src/test/resources/features/api
+          code=$?
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          exit 0
         env:
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
       - name: Rerun failed scenarios (if any)
         id: rerun
-        if: ${{ steps.test.conclusion == 'failure' }}
+        if: ${{ steps.test.outputs.exitcode != '0' }}
         run: |
           if [ -f target/rerun.txt ]; then
             echo "Found rerun file: target/rerun.txt"
+            set +e
             mvn -B -ntp \
               -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
               -Dtest=FailedTestRunner test
+            code=$?
+            echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+            exit 0
           else
-            echo "No rerun file found; cannot re-run failed scenarios. Marking job as failed."
-            exit 1
+            echo "No rerun file found; cannot re-run failed scenarios."
+            echo "exitcode=1" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
         env:
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
@@ -86,8 +136,11 @@ jobs:
       - name: Finalize job status (API)
         if: always()
         run: |
-          if [ "${{ steps.test.conclusion }}" = "failure" ]; then
-            if [ "${{ steps.rerun.conclusion }}" != "success" ]; then
+          TEST_CODE='${{ steps.test.outputs.exitcode }}'
+          RERUN_CODE='${{ steps.rerun.outputs.exitcode }}'
+          if [ -z "$RERUN_CODE" ]; then RERUN_CODE=1; fi
+          if [ "$TEST_CODE" != "0" ]; then
+            if [ "$RERUN_CODE" != "0" ]; then
               echo "API tests failed and rerun did not succeed. Failing job." && exit 1
             fi
           fi
@@ -95,12 +148,13 @@ jobs:
       - name: Suite Summary - API
         if: always()
         env:
-          TEST_CONCLUSION: ${{ steps.test.conclusion }}
-          RERUN_CONCLUSION: ${{ steps.rerun.conclusion }}
+          TEST_CODE: ${{ steps.test.outputs.exitcode }}
+          RERUN_CODE: ${{ steps.rerun.outputs.exitcode }}
         run: |
-          if [ "$TEST_CONCLUSION" = "success" ]; then
+          if [ -z "$RERUN_CODE" ]; then RERUN_CODE=1; fi
+          if [ "$TEST_CODE" = "0" ]; then
             RESULT="success"; NOTE="(initial run)"
-          elif [ "$RERUN_CONCLUSION" = "success" ]; then
+          elif [ "$RERUN_CODE" = "0" ]; then
             RESULT="success"; NOTE="(after rerun)"
           else
             RESULT="failure"; NOTE=""
@@ -135,29 +189,37 @@ jobs:
 
       - name: Run UI Tests (Headless Chrome)
         id: test
-        continue-on-error: true
         run: |
           mkdir -p "$RUNNER_TEMP/chrome"
+          set +e
           mvn -B -ntp clean test \
           -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
           -Dcucumber.features=src/test/resources/features/ui \
           -Dbrowser=chrome-headless
+          code=$?
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          exit 0
         env:
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
       - name: Rerun failed scenarios (if any)
         id: rerun
-        if: ${{ steps.test.conclusion == 'failure' }}
+        if: ${{ steps.test.outputs.exitcode != '0' }}
         run: |
           if [ -f target/rerun.txt ]; then
             echo "Found rerun file: target/rerun.txt"
+            set +e
             mvn -B -ntp \
               -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
               -Dbrowser=chrome-headless \
               -Dtest=FailedTestRunner test
+            code=$?
+            echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+            exit 0
           else
-            echo "No rerun file found; cannot re-run failed scenarios. Marking job as failed."
-            exit 1
+            echo "No rerun file found; cannot re-run failed scenarios."
+            echo "exitcode=1" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
         env:
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
@@ -198,8 +260,11 @@ jobs:
       - name: Finalize job status (UI)
         if: always()
         run: |
-          if [ "${{ steps.test.conclusion }}" = "failure" ]; then
-            if [ "${{ steps.rerun.conclusion }}" != "success" ]; then
+          TEST_CODE='${{ steps.test.outputs.exitcode }}'
+          RERUN_CODE='${{ steps.rerun.outputs.exitcode }}'
+          if [ -z "$RERUN_CODE" ]; then RERUN_CODE=1; fi
+          if [ "$TEST_CODE" != "0" ]; then
+            if [ "$RERUN_CODE" != "0" ]; then
               echo "UI tests failed and rerun did not succeed. Failing job." && exit 1
             fi
           fi
@@ -207,12 +272,13 @@ jobs:
       - name: Suite Summary - UI
         if: always()
         env:
-          TEST_CONCLUSION: ${{ steps.test.conclusion }}
-          RERUN_CONCLUSION: ${{ steps.rerun.conclusion }}
+          TEST_CODE: ${{ steps.test.outputs.exitcode }}
+          RERUN_CODE: ${{ steps.rerun.outputs.exitcode }}
         run: |
-          if [ "$TEST_CONCLUSION" = "success" ]; then
+          if [ -z "$RERUN_CODE" ]; then RERUN_CODE=1; fi
+          if [ "$TEST_CODE" = "0" ]; then
             RESULT="success"; NOTE="(initial run)"
-          elif [ "$RERUN_CONCLUSION" = "success" ]; then
+          elif [ "$RERUN_CODE" = "0" ]; then
             RESULT="success"; NOTE="(after rerun)"
           else
             RESULT="failure"; NOTE=""
@@ -225,7 +291,11 @@ jobs:
     name: Accessibility Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
+    needs: [plan-a11y]
+    if: ${{ needs.plan-a11y.outputs.run == 'true' }}
+    strategy:
+      matrix:
+        browser: ${{ fromJson(needs.plan-a11y.outputs.browsers) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -244,11 +314,14 @@ jobs:
 
       - name: Run Accessibility Suite (Headless Chrome)
         id: test
-        continue-on-error: true
         run: |
+          set +e
           mvn -B -ntp clean test \
             -Dcucumber.features=src/test/resources/features/accessibility \
-            -Dbrowser=chrome-headless
+            -Dbrowser=${{ matrix.browser }}
+          code=$?
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          exit 0
 
       - name: Upload Accessibility Reports
         if: always()
@@ -266,17 +339,19 @@ jobs:
       - name: Finalize job status (Accessibility)
         if: always()
         run: |
-          if [ "${{ steps.test.conclusion }}" != "success" ]; then
+          TEST_CODE='${{ steps.test.outputs.exitcode }}'
+          if [ "$TEST_CODE" != "0" ]; then
             echo "Accessibility tests failed. Failing job." && exit 1
           fi
 
       - name: Suite Summary - Accessibility
         if: always()
         env:
-          TEST_CONCLUSION: ${{ steps.test.conclusion }}
+          TEST_CODE: ${{ steps.test.outputs.exitcode }}
         run: |
-          echo "# 🥒 Cucumber Summary - Accessibility" >> $GITHUB_STEP_SUMMARY
-          echo "Result: ${TEST_CONCLUSION}" >> $GITHUB_STEP_SUMMARY
+          RESULT="failure"; [ "$TEST_CODE" = "0" ] && RESULT="success"
+          echo "# 🥒 Cucumber Summary - Accessibility (${{ matrix.browser }})" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${RESULT}" >> $GITHUB_STEP_SUMMARY
           echo "Artifacts: accessibility-reports" >> $GITHUB_STEP_SUMMARY
 
   allure-report:
@@ -335,6 +410,18 @@ jobs:
           <p>Run the API/UI tests to produce allure-results.</p>
           HTML
 
+      - name: Zip Allure report
+        run: |
+          cd allure-report
+          zip -qr ../allure-report.zip .
+
+      - name: Upload Allure HTML (zip)
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-html
+          path: allure-report.zip
+          retention-days: 14
+
       - name: Upload Allure Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -355,6 +442,26 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
+      - name: Comment merged PR(s) with Allure link
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.sha;
+            const pageUrl = core.getInput('page_url') || '${{ steps.deployment.outputs.page_url }}';
+            const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({ owner, repo, commit_sha: sha });
+            if (!prs.data || prs.data.length === 0) {
+              core.info('No PRs associated with this commit.');
+              return;
+            }
+            const body = `Allure report published: ${pageUrl}`;
+            for (const pr of prs.data) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pr.number, body });
+              core.info(`Commented Allure link on PR #${pr.number}`);
+            }
+
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
@@ -368,26 +475,34 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           GIT_REF: ${{ github.ref }}
           REPO: ${{ github.repository }}
+          API_RES: ${{ needs.api-tests.result }}
+          UI_RES: ${{ needs.ui-tests.result }}
+          A11Y_RES: ${{ needs.accessibility-tests.result }}
         run: |
           echo "# 🎯 Test Execution Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ "${{ needs.api-tests.result }}" == "success" ]; then
+          # API
+          if [ "$API_RES" = "success" ]; then
             echo "✅ **API Tests**: PASSED" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ **API Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **API Tests**: ${API_RES^^}" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ needs.ui-tests.result }}" == "success" ]; then
+          # UI
+          if [ "$UI_RES" = "success" ]; then
             echo "✅ **UI Tests**: PASSED" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ **UI Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **UI Tests**: ${UI_RES^^}" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ needs.accessibility-tests.result }}" == "success" ]; then
+          # Accessibility (may be skipped)
+          if [ "$A11Y_RES" = "success" ]; then
             echo "✅ **Accessibility Tests**: PASSED" >> $GITHUB_STEP_SUMMARY
+          elif [ "$A11Y_RES" = "skipped" ]; then
+            echo "⚪ **Accessibility Tests**: SKIPPED (no label or path change)" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Accessibility Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
           fi
@@ -409,9 +524,173 @@ jobs:
             echo "- Allure Report: (published only on push to main). You can preview the generated report artifact from the 'Build Allure Report' job." >> $GITHUB_STEP_SUMMARY
           fi
 
-          # Fail if any job failed
-          if [ "${{ needs.api-tests.result }}" != "success" ] || [ "${{ needs.ui-tests.result }}" != "success" ] || [ "${{ needs.accessibility-tests.result }}" != "success" ]; then
+          # Fail if any mandatory job failed (ignore skipped accessibility)
+          if [ "$API_RES" != "success" ] || [ "$UI_RES" != "success" ] || { [ "$A11Y_RES" != "success" ] && [ "$A11Y_RES" != "skipped" ]; }; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "⚠️ **Some tests failed. Please review the artifacts for details.**" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
+
+  pr-comment:
+    name: PR Comment (Summary + Artifacts)
+    runs-on: ubuntu-latest
+    needs: [api-tests, ui-tests, accessibility-tests, allure-report, test-summary]
+    if: ${{ github.event_name == 'pull_request' }}
+    outputs:
+      consecutive_fails: ${{ steps.sticky.outputs.consecutive_fails }}
+    steps:
+      - name: Download API Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: api-test-reports
+          path: pr-artifacts/api
+        continue-on-error: true
+
+      - name: Download UI Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-test-reports
+          path: pr-artifacts/ui
+        continue-on-error: true
+
+      - name: Download Accessibility Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: accessibility-reports
+          path: pr-artifacts/accessibility
+        continue-on-error: true
+
+      - name: Compute scenario counts
+        id: counts
+        run: |
+          python3 - << 'PY' > counts.json
+          import os, xml.etree.ElementTree as ET, json
+          base = 'pr-artifacts'
+          suites = ['api', 'ui', 'accessibility']
+          out = {}
+          for s in suites:
+            rootdir = os.path.join(base, s)
+            total = failures = errors = skipped = 0
+            for dirpath, _, files in os.walk(rootdir):
+              for f in files:
+                if f.startswith('TEST-') and f.endswith('.xml'):
+                  p = os.path.join(dirpath, f)
+                  try:
+                    tree = ET.parse(p)
+                    ts = tree.getroot()
+                    total += int(ts.attrib.get('tests', 0))
+                    failures += int(ts.attrib.get('failures', 0))
+                    errors += int(ts.attrib.get('errors', 0))
+                    skipped += int(ts.attrib.get('skipped', 0))
+                  except Exception:
+                    pass
+            out[s] = dict(total=total, failures=failures, errors=errors, skipped=skipped)
+          print(json.dumps(out), end='')
+          PY
+          echo "json=$(cat counts.json)" >> $GITHUB_OUTPUT
+
+      - name: Build artifact links
+        id: links
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const links = {
+              run: runUrl,
+              api: 'api-test-reports',
+              ui: 'ui-test-reports',
+              accessibility: 'accessibility-reports',
+              allureZip: 'allure-report-html'
+            };
+            core.setOutput('run', runUrl);
+            core.setOutput('links', JSON.stringify(links));
+
+      - name: Post sticky PR comment
+        id: sticky
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request.number;
+            const results = {
+              api: '${{ needs.api-tests.result }}',
+              ui: '${{ needs.ui-tests.result }}',
+              accessibility: '${{ needs.accessibility-tests.result }}',
+              overall: '${{ needs.test-summary.result }}'
+            };
+            const counts = JSON.parse(`${{ steps.counts.outputs.json || '{}' }}` || '{}');
+            const links = JSON.parse(`${{ steps.links.outputs.links }}`);
+
+            const rows = [
+              ['API', results.api.toUpperCase(), counts.api?.total ?? '-', counts.api?.failures ?? '-', counts.api?.errors ?? '-', counts.api?.skipped ?? '-'],
+              ['UI', results.ui.toUpperCase(), counts.ui?.total ?? '-', counts.ui?.failures ?? '-', counts.ui?.errors ?? '-', counts.ui?.skipped ?? '-'],
+              ['Accessibility', results.accessibility.toUpperCase(), counts.accessibility?.total ?? '-', counts.accessibility?.failures ?? '-', counts.accessibility?.errors ?? '-', counts.accessibility?.skipped ?? '-'],
+            ];
+
+            const tableHeader = `| Suite | Result | Scenarios | Failures | Errors | Skipped |\n|------|--------|----------:|---------:|-------:|--------:|`;
+            const tableRows = rows.map(r => `| ${r[0]} | ${r[1]} | ${r[2]} | ${r[3]} | ${r[4]} | ${r[5]} |`).join('\n');
+
+            const artifactsNote = `Artifacts are available on the run: ${links.run}\n- API Reports: ${links.api}\n- UI Reports: ${links.ui}\n- Accessibility Reports: ${links.accessibility}\n- Allure HTML (zip): ${links.allureZip}`;
+
+            // Fetch existing bot comment (sticky)
+            const marker = '<!-- ci-bot: summary -->';
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: pr, per_page: 100 });
+            const existing = comments.find(c => c.user.type === 'Bot' && c.body?.includes(marker));
+
+            // Compute consecutive failure count (read old, update with current)
+            let prevCount = 0;
+            const re = /<!-- gate-failures: (\d+) -->/;
+            if (existing && re.test(existing.body)) {
+              prevCount = parseInt(existing.body.match(re)[1] || '0', 10);
+            }
+            const failed = results.overall.toLowerCase() !== 'success';
+            const newCount = failed ? prevCount + 1 : 0;
+
+            const body = `${marker}\n` +
+              `# CI Status: ${failed ? '❌ FAILED' : '✅ PASSED'}\n\n` +
+              `${tableHeader}\n${tableRows}\n\n` +
+              `${artifactsNote}\n\n` +
+              `<!-- gate-failures: ${newCount} -->`;
+
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+            }
+
+            core.setOutput('consecutive_fails', String(newCount));
+
+  auto-close-stale-prs:
+    name: Auto-close stale failing PRs
+    runs-on: ubuntu-latest
+    needs: [pr-comment]
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Close stale PRs with repeated gate failures
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNum = context.payload.pull_request.number;
+            const threshold = 3; // consecutive failures required
+            const staleDays = 14; // days since PR opened
+            const consecutive = parseInt(`${{ needs.pr-comment.outputs.consecutive_fails || '0' }}`, 10) || 0;
+
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNum });
+            const created = new Date(pr.created_at);
+            const now = new Date();
+            const ageDays = Math.floor((now - created) / (1000*60*60*24));
+
+            if (consecutive >= threshold && ageDays >= staleDays && pr.state === 'open') {
+              const msg = `Closing this PR because the required checks failed ${consecutive} times in a row and the PR is ${ageDays} days old. Please re-open when ready.`;
+              await github.rest.issues.createComment({ owner, repo, issue_number: prNum, body: msg });
+              await github.rest.pulls.update({ owner, repo, pull_number: prNum, state: 'closed' });
+              core.info(`PR #${prNum} closed due to repeated failures.`);
+            } else {
+              core.info(`PR #${prNum} not eligible for auto-close (consecutive=${consecutive}, age=${ageDays}d).`);
+            }

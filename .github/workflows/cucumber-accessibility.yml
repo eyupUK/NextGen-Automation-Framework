@@ -34,19 +34,29 @@ jobs:
 
       - name: Run Accessibility tests
         id: test
-        continue-on-error: true
-        run: mvn -B -Dheadless=true -Dtest=AccessibilityCukesRunner test
+        run: |
+          set +e
+          mvn -B -Dheadless=true -Dtest=AccessibilityCukesRunner test
+          code=$?
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          exit 0
 
       - name: Rerun failed scenarios (if any)
         id: rerun
-        if: ${{ steps.test.conclusion == 'failure' }}
+        if: ${{ steps.test.outputs.exitcode != '0' }}
         run: |
           # Map job-specific rerun file to the default path expected by FailedTestRunner
           if [ -f target/rerun-accessibility.txt ]; then
             cp target/rerun-accessibility.txt target/rerun.txt
+            set +e
             mvn -B -Dheadless=true -Dtest=FailedTestRunner test
+            code=$?
+            echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+            exit 0
           else
             echo "No accessibility rerun file found"
+            echo "exitcode=1" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
       - name: Upload Accessibility reports
@@ -66,15 +76,29 @@ jobs:
       - name: Finalize job status
         if: always()
         run: |
-          if [ "${{ steps.test.conclusion }}" = "failure" ]; then
-            if [ "${{ steps.rerun.conclusion }}" != "success" ]; then
+          TEST_CODE='${{ steps.test.outputs.exitcode }}'
+          RERUN_CODE='${{ steps.rerun.outputs.exitcode }}'
+          if [ -z "$RERUN_CODE" ]; then RERUN_CODE=1; fi
+          if [ "$TEST_CODE" != "0" ]; then
+            if [ "$RERUN_CODE" != "0" ]; then
               echo "Accessibility tests failed and rerun did not succeed. Failing job." && exit 1
             fi
           fi
 
       - name: Cucumber Summary
         if: always()
+        env:
+          TEST_CODE: ${{ steps.test.outputs.exitcode }}
+          RERUN_CODE: ${{ steps.rerun.outputs.exitcode }}
         run: |
+          if [ -z "$RERUN_CODE" ]; then RERUN_CODE=1; fi
+          if [ "$TEST_CODE" = "0" ]; then
+            RESULT="success"; NOTE="(initial run)"
+          elif [ "$RERUN_CODE" = "0" ]; then
+            RESULT="success"; NOTE="(after rerun)"
+          else
+            RESULT="failure"; NOTE=""
+          fi
           echo "# 🥒 Cucumber Summary - Accessibility" >> $GITHUB_STEP_SUMMARY
-          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${RESULT} ${NOTE}" >> $GITHUB_STEP_SUMMARY
           echo "Artifacts: accessibility-reports" >> $GITHUB_STEP_SUMMARY
