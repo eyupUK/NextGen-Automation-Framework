@@ -1,9 +1,9 @@
 name: Nightly Performance Tests
 
 on:
-  #  schedule:
+    schedule:
   # Run every night at 2 AM UTC
-  #    - cron: '0 2 * * *'
+      - cron: '0 2 * * *'
   push:
     branches: [ main ]
 
@@ -71,7 +71,6 @@ jobs:
       - name: Run E-commerce API Load Test
         run: |
           mvn -B -ntp gatling:test \
-            -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=15 \
             -Dperf.rampup=20

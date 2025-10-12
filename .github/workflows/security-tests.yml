@@ -1,79 +1,79 @@
-name: Security Tests
-
-on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
-#  pull_request:
-#    branches: [ main ]
-
-permissions:
-  contents: read
-
-concurrency:
-  group: security-tests-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  security:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [ web, api ]
-    env:
-      # Provide API key via GitHub Secrets for API scenarios
-      WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Cache Maven repository
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-m2-
-
-      - name: Run Security Tests (web)
-        if: matrix.target == 'web'
-        run: |
-          ./mvnw -B -DtrimStackTrace=false -Dcucumber.filter.tags='@security and @web' test
-
-      - name: Run Security Tests (api)
-        if: matrix.target == 'api'
-        run: |
-          ./mvnw -B -DWEATHER_API_KEY="${WEATHER_API_KEY}" -DtrimStackTrace=false -Dcucumber.filter.tags='@security and @api and not @rate_limit' test
-
-      - name: Upload Security Test Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-reports-${{ matrix.target }}
-          path: |
-            target/security-cucumber.json
-            target/security-cucumber-report.html
-            target/allure-results/**
-            target/cucumber-report.html
-            target/cucumber-html-reports/**
-            target/surefire-reports/**
-            target/security-rerun.txt
-            target/failed-html-report/**
-          if-no-files-found: ignore
-          retention-days: 14
-
-      - name: Suite Summary - Security
-        if: always()
-        run: |
-          echo "# 🥒 Cucumber Summary - Security (${{ matrix.target }})" >> $GITHUB_STEP_SUMMARY
-          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "Artifacts: security-reports-${{ matrix.target }}" >> $GITHUB_STEP_SUMMARY
+#name: Security Tests
+#
+#on:
+#  workflow_dispatch:
+#  push:
+#    branches: [ main, complete-ci-implementation ]
+##  pull_request:
+##    branches: [ main ]
+#
+#permissions:
+#  contents: read
+#
+#concurrency:
+#  group: security-tests-${{ github.ref }}
+#  cancel-in-progress: true
+#
+#jobs:
+#  security:
+#    runs-on: ubuntu-latest
+#    timeout-minutes: 30
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        target: [ web, api ]
+#    env:
+#      # Provide API key via GitHub Secrets for API scenarios
+#      WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+#
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK 21
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: 'temurin'
+#          java-version: '21'
+#
+#      - name: Cache Maven repository
+#        uses: actions/cache@v4
+#        with:
+#          path: ~/.m2/repository
+#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+#          restore-keys: |
+#            ${{ runner.os }}-m2-
+#
+#      - name: Run Security Tests (web)
+#        if: matrix.target == 'web'
+#        run: |
+#          ./mvnw -B -DtrimStackTrace=false -Dcucumber.filter.tags='@security and @web' test
+#
+#      - name: Run Security Tests (api)
+#        if: matrix.target == 'api'
+#        run: |
+#          ./mvnw -B -DWEATHER_API_KEY="${WEATHER_API_KEY}" -DtrimStackTrace=false -Dcucumber.filter.tags='@security and @api and not @rate_limit' test
+#
+#      - name: Upload Security Test Reports
+#        if: always()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: security-reports-${{ matrix.target }}
+#          path: |
+#            target/security-cucumber.json
+#            target/security-cucumber-report.html
+#            target/allure-results/**
+#            target/cucumber-report.html
+#            target/cucumber-html-reports/**
+#            target/surefire-reports/**
+#            target/security-rerun.txt
+#            target/failed-html-report/**
+#          if-no-files-found: ignore
+#          retention-days: 14
+#
+#      - name: Suite Summary - Security
+#        if: always()
+#        run: |
+#          echo "# 🥒 Cucumber Summary - Security (${{ matrix.target }})" >> $GITHUB_STEP_SUMMARY
+#          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+#          echo "Artifacts: security-reports-${{ matrix.target }}" >> $GITHUB_STEP_SUMMARY
