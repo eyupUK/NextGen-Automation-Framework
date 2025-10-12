@@ -71,7 +71,7 @@ public class EcommerceApiPerformanceSimulation extends Simulation {
                                         ]
                                     }
                                     """))
-                            .check(status().is(200))
+                            .check(status().is(201))
                             .check(jsonPath("$.id").exists())
                             .check(responseTimeInMillis().lte(2000))
             );
@@ -86,7 +86,7 @@ public class EcommerceApiPerformanceSimulation extends Simulation {
                                         "password": "m38rmF$"
                                     }
                                     """))
-                            .check(status().is(200))
+                            .check(status().is(201))
                             .check(jsonPath("$.token").exists().saveAs("authToken"))
                             .check(responseTimeInMillis().lte(2000))
             )
