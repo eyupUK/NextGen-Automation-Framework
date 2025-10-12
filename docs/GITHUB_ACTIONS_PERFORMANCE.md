@@ -13,8 +13,7 @@ This project includes **4 comprehensive GitHub Actions workflows** for automated
 
 **Triggers:**
 - ✅ Manual trigger (workflow_dispatch) with customizable parameters
-- ✅ Weekly schedule (Sundays at 2 AM UTC)
-- 🔄 Optional: On push to main/master (commented out by default)
+- ✅ On push to main/master/complete-ci-implementation
 
 **Features:**
 - Run Weather API or E-commerce API tests
@@ -204,6 +203,12 @@ To make artifact uploads resilient and easy to diagnose, the workflows now:
 - Use broader artifact globs to capture default report names even if a runner-specific filename changes.
 
 This means that when an upload step says “No files found…”, the job log will show exactly which files exist in `target/`, so paths can be adjusted quickly if needed.
+
+## ⚠️ Failure Handling (no false greens)
+
+- Gatling and JUnit steps capture their exit codes explicitly and expose them as step outputs.
+- A finalization step fails the job (`exit 1`) if any selected simulation/test returns a non‑zero exit code.
+- This prevents false-green runs where a step used `continue-on-error` but the job still succeeded.
 
 ## 🧩 Notes for Security Matrix Workflows
 
