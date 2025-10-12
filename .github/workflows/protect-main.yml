@@ -1,0 +1,68 @@
+name: Protect main branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to protect
+        required: true
+        default: main
+      required_contexts:
+        description: JSON array of required status checks (contexts)
+        required: true
+        default: '["Test Summary"]'
+
+permissions:
+  contents: read
+
+jobs:
+  protect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate admin token
+        run: |
+          if [ -z "${{ secrets.REPO_ADMIN_TOKEN }}" ]; then
+            echo "REPO_ADMIN_TOKEN is not set. Create a classic PAT with 'repo' and 'admin:repo_hook' scopes, store it as a repo/org secret named REPO_ADMIN_TOKEN, then re-run this workflow." >&2
+            exit 1
+          fi
+
+      - name: Enforce branch protection with required checks
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.REPO_ADMIN_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const branch = core.getInput('branch');
+            let contexts;
+            try {
+              contexts = JSON.parse(core.getInput('required_contexts'));
+            } catch (e) {
+              core.setFailed('required_contexts must be a JSON array of strings');
+              return;
+            }
+
+            // Apply protection with required status checks
+            await github.request('PUT /repos/{owner}/{repo}/branches/{branch}/protection', {
+              owner,
+              repo,
+              branch,
+              required_status_checks: {
+                strict: true,
+                contexts
+              },
+              enforce_admins: true,
+              required_pull_request_reviews: {
+                required_approving_review_count: 1,
+                dismiss_stale_reviews: true,
+                require_code_owner_reviews: false
+              },
+              restrictions: null,
+              required_linear_history: false,
+              allow_force_pushes: false,
+              allow_deletions: false,
+              block_creations: false,
+              required_conversation_resolution: true,
+              lock_branch: false
+            });
+            core.info(`Branch protection applied on ${branch} with required contexts: ${contexts.join(', ')}`);

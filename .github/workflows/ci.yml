@@ -2,12 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [ x ]
-#  pull_request:
-#    branches: [ main ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -34,8 +36,30 @@ jobs:
           cache: maven
 
       - name: Run API Tests
+        id: test
+        continue-on-error: true
         run: |
-          mvn -B -ntp clean test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dcucumber.features=src/test/resources/features/api
+          mvn -B -ntp clean test \
+          -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+          -Dcucumber.features=src/test/resources/features/api
+        env:
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+
+      - name: Rerun failed scenarios (if any)
+        id: rerun
+        if: ${{ steps.test.conclusion == 'failure' }}
+        run: |
+          if [ -f target/rerun.txt ]; then
+            echo "Found rerun file: target/rerun.txt"
+            mvn -B -ntp \
+              -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+              -Dtest=FailedTestRunner test
+          else
+            echo "No rerun file found; cannot re-run failed scenarios. Marking job as failed."
+            exit 1
+          fi
+        env:
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
       - name: Upload API Test Reports
         if: always()
@@ -46,6 +70,7 @@ jobs:
             target/cucumber-report.html
             target/cucumber-html-reports/**/*
             target/surefire-reports/**/*
+            target/rerun.txt
           if-no-files-found: ignore
           retention-days: 14
 
@@ -58,11 +83,30 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Suite Summary - API
+      - name: Finalize job status (API)
         if: always()
         run: |
+          if [ "${{ steps.test.conclusion }}" = "failure" ]; then
+            if [ "${{ steps.rerun.conclusion }}" != "success" ]; then
+              echo "API tests failed and rerun did not succeed. Failing job." && exit 1
+            fi
+          fi
+
+      - name: Suite Summary - API
+        if: always()
+        env:
+          TEST_CONCLUSION: ${{ steps.test.conclusion }}
+          RERUN_CONCLUSION: ${{ steps.rerun.conclusion }}
+        run: |
+          if [ "$TEST_CONCLUSION" = "success" ]; then
+            RESULT="success"; NOTE="(initial run)"
+          elif [ "$RERUN_CONCLUSION" = "success" ]; then
+            RESULT="success"; NOTE="(after rerun)"
+          else
+            RESULT="failure"; NOTE=""
+          fi
           echo "# 🥒 Cucumber Summary - API" >> $GITHUB_STEP_SUMMARY
-          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${RESULT} ${NOTE}" >> $GITHUB_STEP_SUMMARY
           echo "Artifacts: api-test-reports, api-allure-results" >> $GITHUB_STEP_SUMMARY
 
   ui-tests:
@@ -90,12 +134,33 @@ jobs:
           chrome-version: stable
 
       - name: Run UI Tests (Headless Chrome)
+        id: test
+        continue-on-error: true
         run: |
           mkdir -p "$RUNNER_TEMP/chrome"
           mvn -B -ntp clean test \
           -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
           -Dcucumber.features=src/test/resources/features/ui \
           -Dbrowser=chrome-headless
+        env:
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+
+      - name: Rerun failed scenarios (if any)
+        id: rerun
+        if: ${{ steps.test.conclusion == 'failure' }}
+        run: |
+          if [ -f target/rerun.txt ]; then
+            echo "Found rerun file: target/rerun.txt"
+            mvn -B -ntp \
+              -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+              -Dbrowser=chrome-headless \
+              -Dtest=FailedTestRunner test
+          else
+            echo "No rerun file found; cannot re-run failed scenarios. Marking job as failed."
+            exit 1
+          fi
+        env:
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
       - name: Upload UI Test Reports
         if: always()
@@ -106,6 +171,7 @@ jobs:
             target/cucumber-report.html
             target/cucumber-html-reports/**/*
             target/surefire-reports/**/*
+            target/rerun.txt
           if-no-files-found: ignore
           retention-days: 14
 
@@ -118,8 +184,8 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Upload Screenshots (on failure)
-        if: failure()
+      - name: Upload Screenshots (if present)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ui-screenshots
@@ -129,11 +195,30 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: Suite Summary - UI
+      - name: Finalize job status (UI)
         if: always()
         run: |
+          if [ "${{ steps.test.conclusion }}" = "failure" ]; then
+            if [ "${{ steps.rerun.conclusion }}" != "success" ]; then
+              echo "UI tests failed and rerun did not succeed. Failing job." && exit 1
+            fi
+          fi
+
+      - name: Suite Summary - UI
+        if: always()
+        env:
+          TEST_CONCLUSION: ${{ steps.test.conclusion }}
+          RERUN_CONCLUSION: ${{ steps.rerun.conclusion }}
+        run: |
+          if [ "$TEST_CONCLUSION" = "success" ]; then
+            RESULT="success"; NOTE="(initial run)"
+          elif [ "$RERUN_CONCLUSION" = "success" ]; then
+            RESULT="success"; NOTE="(after rerun)"
+          else
+            RESULT="failure"; NOTE=""
+          fi
           echo "# 🥒 Cucumber Summary - UI" >> $GITHUB_STEP_SUMMARY
-          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${RESULT} ${NOTE}" >> $GITHUB_STEP_SUMMARY
           echo "Artifacts: ui-test-reports, ui-allure-results (see ui-screenshots if present)" >> $GITHUB_STEP_SUMMARY
 
   accessibility-tests:
@@ -158,6 +243,8 @@ jobs:
           chrome-version: stable
 
       - name: Run Accessibility Suite (Headless Chrome)
+        id: test
+        continue-on-error: true
         run: |
           mvn -B -ntp clean test \
             -Dcucumber.features=src/test/resources/features/accessibility \
@@ -176,12 +263,97 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Suite Summary - Accessibility
+      - name: Finalize job status (Accessibility)
         if: always()
         run: |
+          if [ "${{ steps.test.conclusion }}" != "success" ]; then
+            echo "Accessibility tests failed. Failing job." && exit 1
+          fi
+
+      - name: Suite Summary - Accessibility
+        if: always()
+        env:
+          TEST_CONCLUSION: ${{ steps.test.conclusion }}
+        run: |
           echo "# 🥒 Cucumber Summary - Accessibility" >> $GITHUB_STEP_SUMMARY
-          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${TEST_CONCLUSION}" >> $GITHUB_STEP_SUMMARY
           echo "Artifacts: accessibility-reports" >> $GITHUB_STEP_SUMMARY
+
+  allure-report:
+    name: Build Allure Report
+    runs-on: ubuntu-latest
+    needs: [api-tests, ui-tests]
+    if: always()
+    steps:
+      - name: Download API Allure Results
+        uses: actions/download-artifact@v4
+        with:
+          name: api-allure-results
+          path: allure-input/api
+        continue-on-error: true
+
+      - name: Download UI Allure Results
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-allure-results
+          path: allure-input/ui
+        continue-on-error: true
+
+      - name: Merge allure results
+        id: merge
+        run: |
+          mkdir -p allure-results
+          COPIED=0
+          for d in allure-input/*; do
+            if [ -d "$d" ] && [ "$(ls -A "$d" 2>/dev/null)" ]; then
+              cp -R "$d"/* allure-results/ 2>/dev/null || true
+              COPIED=1
+            fi
+          done
+          if [ "$COPIED" -eq 0 ]; then
+            echo "no_results=true" >> $GITHUB_OUTPUT
+          else
+            echo "no_results=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Allure report
+        if: steps.merge.outputs.no_results == 'false'
+        uses: simple-elf/allure-report-action@v1.7
+        with:
+          allure_results: allure-results
+          allure_report: allure-report
+
+      - name: Create placeholder report when no results
+        if: steps.merge.outputs.no_results == 'true'
+        run: |
+          mkdir -p allure-report
+          cat > allure-report/index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>Allure Report</title>
+          <h1>No Allure results were found</h1>
+          <p>Run the API/UI tests to produce allure-results.</p>
+          HTML
+
+      - name: Upload Allure Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure-report
+
+  deploy-pages:
+    name: Publish Allure to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: allure-report
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   test-summary:
     name: Test Summary
@@ -192,6 +364,10 @@ jobs:
 
     steps:
       - name: Generate Summary
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GIT_REF: ${{ github.ref }}
+          REPO: ${{ github.repository }}
         run: |
           echo "# 🎯 Test Execution Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -218,11 +394,20 @@ jobs:
 
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- API Test Reports: `api-test-reports`" >> $GITHUB_STEP_SUMMARY
-          echo "- API Allure Results: `api-allure-results`" >> $GITHUB_STEP_SUMMARY
-          echo "- UI Test Reports: `ui-test-reports`" >> $GITHUB_STEP_SUMMARY
-          echo "- UI Allure Results: `ui-allure-results`" >> $GITHUB_STEP_SUMMARY
-          echo "- Accessibility Reports: `accessibility-reports`" >> $GITHUB_STEP_SUMMARY
+          echo "- API Test Reports: \`api-test-reports\`" >> $GITHUB_STEP_SUMMARY
+          echo "- API Allure Results: \`api-allure-results\`" >> $GITHUB_STEP_SUMMARY
+          echo "- UI Test Reports: \`ui-test-reports\`" >> $GITHUB_STEP_SUMMARY
+          echo "- UI Allure Results: \`ui-allure-results\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Accessibility Reports: \`accessibility-reports\`" >> $GITHUB_STEP_SUMMARY
+
+          # Link to Pages if this is a main push; otherwise inform where to find report
+          OWNER=${REPO%%/*}
+          NAME=${REPO##*/}
+          if [ "$EVENT_NAME" = "push" ] && [ "$GIT_REF" = "refs/heads/main" ]; then
+            echo "- Allure Report (GitHub Pages): https://${OWNER}.github.io/${NAME}/" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Allure Report: (published only on push to main). You can preview the generated report artifact from the 'Build Allure Report' job." >> $GITHUB_STEP_SUMMARY
+          fi
 
           # Fail if any job failed
           if [ "${{ needs.api-tests.result }}" != "success" ] || [ "${{ needs.ui-tests.result }}" != "success" ] || [ "${{ needs.accessibility-tests.result }}" != "success" ]; then
