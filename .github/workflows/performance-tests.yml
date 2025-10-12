@@ -25,7 +25,7 @@ on:
         options: [weather, ecommerce, all]
 
   push:
-    branches: [ main, master ]
+    branches: [ main, master, complete-ci-implementation ]
 
 permissions:
   contents: read
@@ -96,6 +96,7 @@ jobs:
           fi
 
       - name: Run Weather API Performance Test
+        id: weather-perf
         if: env.SIMULATION == 'weather' || env.SIMULATION == 'all'
         run: |
           mvn -B -ntp gatling:test \
@@ -107,6 +108,7 @@ jobs:
         continue-on-error: true
 
       - name: Run E-commerce API Performance Test
+        id: ecommerce-perf
         if: env.SIMULATION == 'ecommerce' || env.SIMULATION == 'all'
         run: |
           mvn -B -ntp gatling:test \
@@ -144,6 +146,16 @@ jobs:
           echo "- Download artifacts to view detailed Gatling HTML reports" >> $GITHUB_STEP_SUMMARY
           echo "- Reports include: Response times, throughput, percentiles, charts" >> $GITHUB_STEP_SUMMARY
 
+      - name: Finalize job status (Gatling)
+        if: always()
+        run: |
+          # If any selected simulation failed, mark job failed (IDs may not exist if step skipped)
+          W_CONCL='${{ steps.weather-perf.conclusion }}'
+          E_CONCL='${{ steps.ecommerce-perf.conclusion }}'
+          if [ "$W_CONCL" = "failure" ] || [ "$E_CONCL" = "failure" ]; then
+            echo "Gatling run failed. Failing job." && exit 1
+          fi
+
   junit-performance-tests:
     name: JUnit Performance Tests
     runs-on: ubuntu-latest
@@ -177,6 +189,7 @@ jobs:
         run: mkdir -p target/performance-results
 
       - name: Run JUnit Performance Tests
+        id: junit-perf
         run: mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest -Dsla.p95.ms=2000 -Dsla.p99.ms=4000 -Dsla.successRate=95
         continue-on-error: true
 
@@ -211,6 +224,13 @@ jobs:
           echo "# 🧪 Suite Summary - JUnit Performance" >> $GITHUB_STEP_SUMMARY
           echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "Artifacts: junit-performance-results-${{ github.run_number }}, performance-metrics-csv-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Finalize job status (JUnit)
+        if: always()
+        run: |
+          if [ "${{ steps.junit-perf.conclusion }}" = "failure" ]; then
+            echo "JUnit performance run failed. Failing job." && exit 1
+          fi
 
   performance-comparison:
     name: Performance Comparison

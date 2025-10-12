@@ -2,7 +2,7 @@ name: Security Tests (SecurityCukesRunner)
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, complete-ci-implementation ]
 #  pull_request:
 #    branches: [ main, master ]
 
@@ -37,17 +37,33 @@ jobs:
       - name: Run Security tests
         id: test
         continue-on-error: true
-        run: mvn -B -Dheadless=true -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=SecurityCukesRunner test
+        run: mvn -B -Dheadless=true \
+          -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+          -Dtest=SecurityCukesRunner test
 
       - name: Rerun failed scenarios (if any)
+        id: rerun
         if: ${{ steps.test.conclusion == 'failure' }}
         run: |
           if [ -f target/security-rerun.txt ]; then
             cp target/security-rerun.txt target/rerun.txt
-            mvn -B -Dheadless=true -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=FailedTestRunner test
+            mvn -B -Dheadless=true \
+              -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
+              -Dtest=FailedTestRunner test
           else
             echo "No security rerun file found"
           fi
+
+      - name: Debug - List target contents (if artifacts missing)
+        if: always()
+        run: |
+          echo "Listing target directory (if exists):"
+          ls -la target || true
+          echo "\nKnown report files (if present):"
+          ls -la target/*cucumber*.* 2>/dev/null || true
+          ls -la target/allure-results 2>/dev/null || true
+          ls -la target/cucumber-html-reports 2>/dev/null || true
+          ls -la target/surefire-reports 2>/dev/null || true
 
       - name: Upload Security reports
         uses: actions/upload-artifact@v4
@@ -57,11 +73,25 @@ jobs:
           path: |
             target/security-cucumber.json
             target/security-cucumber-report.html
+            target/cucumber.json
+            target/cucumber-report.html
             target/allure-results/**
+            target/cucumber-html-reports/**
+            target/surefire-reports/**
             target/security-rerun.txt
+            target/rerun.txt
             target/failed-html-report/**
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Finalize job status
+        if: always()
+        run: |
+          if [ "${{ steps.test.conclusion }}" = "failure" ]; then
+            if [ "${{ steps.rerun.conclusion }}" != "success" ]; then
+              echo "Security tests failed and rerun did not succeed. Failing job." && exit 1
+            fi
+          fi
 
       - name: Cucumber Summary
         if: always()
