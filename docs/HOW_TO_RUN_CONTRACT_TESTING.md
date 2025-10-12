@@ -44,15 +44,15 @@ After a successful run, pact files are written to:
 You can also run the consumer contracts through Cucumber BDD scenarios for unified reporting and tagging.
 
 - Feature: `src/test/resources/features/contract/weather_api_contracts.feature`
-- Runner: `com.example.runners.ConractCukesRunner` (tagged `@contract`)
+- Runner: `com.example.runners.ContractCukesRunner` (tagged `@contract`)
 
 Run examples:
 ```bash
 # Run the BDD contract scenarios (uses @contract tag by default)
-mvn -Dtest=ConractCukesRunner test
+mvn -Dtest=ContractCukesRunner test
 
 # With Maven Wrapper
-./mvnw -Dtest=ConractCukesRunner test
+./mvnw -Dtest=ContractCukesRunner test
 ```
 
 ## Mock server usage

@@ -84,6 +84,13 @@ This repo includes production-ready workflows under `.github/workflows/`:
   - Summary: each job writes a short “Cucumber Summary” to `$GITHUB_STEP_SUMMARY`
   - Hardened uploads: each Cucumber workflow now prints a debug listing of `target/` and common report folders and uses broadened artifact globs (e.g., `target/cucumber*.{json,html}`, `target/allure-results/**`, `target/cucumber-html-reports/**`, `target/surefire-reports/**`) to reduce “No files found” surprises.
 
+### Failure handling and reruns (no more false greens)
+
+- Each test step records the Maven exit code instead of relying on the step "conclusion" with `continue-on-error`.
+- If the initial run fails and a `target/rerun*.txt` exists, `FailedTestRunner` is executed automatically.
+- The job fails with exit code 1 when the initial run fails and the rerun also fails (or when no rerun file exists).
+- The summary reflects the real outcome: success (initial), success (after rerun), or failure.
+
 - Performance and PR checks
   - `performance-tests.yml`: flexible Gatling/JUnit runs (manual or on push), artifacts and summaries
     - Hardened with debug listing of `target/gatling-results/`, `target/allure-results/`, and `target/surefire-reports/` before uploads.
@@ -206,7 +213,7 @@ mvn clean test -Dcucumber.filter.tags='@accessibility'
 - Cucumber HTML: `target/cucumber-report.html`
 - Cucumber JSON: `target/cucumber.json`
 - Allure results: `target/allure-results/`
-  - Produced when running Cucumber runners (e.g., `AllCukesRunner`, `ConractCukesRunner`). Pact-only JUnit runs via `-Pcontract` do not emit Allure results unless you add the Allure JUnit adapter.
+  - Produced when running Cucumber runners (e.g., `AllCukesRunner`, `ContractCukesRunner`). Pact-only JUnit runs via `-Pcontract` do not emit Allure results unless you add the Allure JUnit adapter.
   - Generate Allure HTML report with Maven:
     ```bash
     mvn io.qameta.allure:allure-maven:report
@@ -309,12 +316,12 @@ mvn -Dtest='com.example.contract.*PactTest' test
 You can run the same Pact tests through Cucumber BDD for unified reporting and tagging.
 
 - Feature: `src/test/resources/features/contract/weather_api_contracts.feature`
-- Runner: `com.example.runners.ConractCukesRunner` (targets `@contract` tag)
+- Runner: `com.example.runners.ContractCukesRunner` (targets `@contract` tag)
 
 Run examples:
 ```bash
-mvn -Dtest=ConractCukesRunner test
-./mvnw -Dtest=ConractCukesRunner test
+mvn -Dtest=ContractCukesRunner test
+./mvnw -Dtest=ContractCukesRunner test
 ```
 
 ## Further Reading
