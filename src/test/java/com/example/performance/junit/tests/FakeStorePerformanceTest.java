@@ -23,7 +23,7 @@ public class FakeStorePerformanceTest {
 
     @Before
     public void setUp() {
-        String baseUrl = ConfigurationReader.get("fakestore_api_base_url");
+        String baseUrl = ConfigurationReader.get("fake_store_api_base_url");
         if (baseUrl == null || baseUrl.isBlank()) {
             baseUrl = "https://fakestoreapi.com";
         }

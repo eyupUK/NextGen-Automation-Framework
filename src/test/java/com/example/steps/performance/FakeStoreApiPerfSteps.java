@@ -17,7 +17,7 @@ public class FakeStoreApiPerfSteps {
 
     @Given("fake store api is ready for performance tests")
     public void fakeStoreApiIsReadyForPerformanceTests() {
-        String baseUrl = ConfigurationReader.get("fakestore_api_base_url");
+        String baseUrl = ConfigurationReader.get("fake_store_api_base_url");
         if (baseUrl == null || baseUrl.isBlank()) {
             baseUrl = "https://fakestoreapi.com";
         }

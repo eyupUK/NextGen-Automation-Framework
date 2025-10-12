@@ -136,6 +136,12 @@ done
 # If no command provided, default to weather-api for convenience
 if [ -z "$COMMAND" ]; then
     print_message "$YELLOW" "No command specified. Defaulting to 'weather-api'. Use -h for help."
+    print_message "$BLUE" "COMMANDS:
+                               weather-api       Run Weather API performance test (Gatling)
+                               ecommerce-api     Run E-commerce API performance test (Gatling)
+                               junit-perf        Run JUnit-based performance tests
+                               all-gatling       Run all Gatling simulations
+                               report            Open last Gatling report"
     COMMAND="weather-api"
 fi
 

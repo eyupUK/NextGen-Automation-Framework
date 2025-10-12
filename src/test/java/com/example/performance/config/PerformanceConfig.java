@@ -10,7 +10,7 @@ public class PerformanceConfig {
 
     // Load from configuration.properties
     public static final String WEATHER_API_BASE_URL = ConfigurationReader.get("weather_api_base_url");
-    public static final String FAKESTORE_API_BASE_URL = ConfigurationReader.get("fakestore_api_base_url");
+    public static final String FAKESTORE_API_BASE_URL = ConfigurationReader.get("fakes_tore_api_base_url");
 
     private static int getIntOrDefault(String key, int defaultVal) {
         String val = ConfigurationReader.get(key);
