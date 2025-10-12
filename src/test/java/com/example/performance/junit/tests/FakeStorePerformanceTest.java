@@ -1,4 +1,4 @@
-package com.example.performance.tests;
+package com.example.performance.junit.tests;
 
 import com.example.util.ConfigurationReader;
 import io.restassured.builder.RequestSpecBuilder;

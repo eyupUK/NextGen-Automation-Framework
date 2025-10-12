@@ -85,8 +85,12 @@
                 <artifactId>gatling-maven-plugin</artifactId>
                 <version>${gatling-maven-plugin.version}</version>
                 <configuration>
-                    <simulationClass>com.example.performance.simulations.WeatherApiPerformanceSimulation</simulationClass>
+                    <includes>
+                        <include>com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation</include>
+                        <include>com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation</include>
+                    </includes>
                     <resultsFolder>${project.build.directory}/gatling-results</resultsFolder>
+                    <failOnError>true</failOnError>
                     <!-- Open JDK modules required by Gatling internals when running on JDK 17+ -->
                     <jvmArgs>
                         <jvmArg>--add-opens=java.base/java.lang=ALL-UNNAMED</jvmArg>

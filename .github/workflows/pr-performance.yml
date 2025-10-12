@@ -54,7 +54,7 @@ jobs:
           echo "Running quick performance check..."
           mvn -B -ntp gatling:test \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
-            -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+            -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=5 \
             -Dperf.rampup=5 \
             -Dperf.duration=30 \

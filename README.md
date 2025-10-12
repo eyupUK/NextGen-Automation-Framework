@@ -63,7 +63,7 @@ mvn clean test
 - UI/API default: `com.example.runners.CukesRunner`
 - Accessibility only: `com.example.runners.AccessibilityCukesRunner` (tags: `@accessibility`)
 - Security suite: `com.example.runners.SecurityCukesRunner` (tags: `@security`)
-- Performance (JUnit suite): `com.example.runners.PerformanceRunner`
+- Performance (JUnit suite): `com.example.runners.PerformanceJUnitRunner`
 - Performance (Cucumber): `com.example.runners.PerformanceCukesRunner` (default tags: `@performance`)
 
 You can run these directly from your IDE or leave discovery to Maven Surefire (already configured to include `**/*CukesRunner.java` and `FailedTestRunner`).
@@ -237,7 +237,7 @@ export WEATHER_API_KEY=your_api_key
 
 # or run directly with Maven
 mvn gatling:test \
-  -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+  -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=5 -Dperf.duration=30
 ```
 

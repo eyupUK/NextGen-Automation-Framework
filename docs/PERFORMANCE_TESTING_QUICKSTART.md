@@ -33,7 +33,7 @@ chmod +x run-performance-tests.sh
 #### Option B: Using Maven Directly
 ```bash
 # Run Gatling performance test (Weather API)
-mvn gatling:test -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation
+mvn gatling:test -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation
 
 # Run JUnit-based performance tests
 mvn test -Dtest=WeatherApiPerformanceTest

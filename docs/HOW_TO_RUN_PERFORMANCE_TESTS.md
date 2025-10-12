@@ -34,7 +34,7 @@ export WEATHER_API_KEY=your_api_key
 ### 2. Run the Performance Test
 ```bash
 mvn gatling:test \
-  -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+  -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=5 \
   -Dperf.rampup=5 \
   -Dperf.duration=30 \
@@ -62,7 +62,7 @@ export WEATHER_API_KEY=your_api_key
 echo $WEATHER_API_KEY
 
 # Then run the test
-mvn gatling:test -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation
+mvn gatling:test -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation
 ```
 
 **Permanent Setup (optional):**
@@ -117,7 +117,7 @@ Remember: Always set `export WEATHER_API_KEY=your_api_key` first for Weather API
 ```bash
 export WEATHER_API_KEY=your_api_key
 mvn gatling:test \
-  -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+  -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=5 \
   -Dperf.duration=30
 ```
@@ -126,7 +126,7 @@ mvn gatling:test \
 ```bash
 export WEATHER_API_KEY=your_api_key
 mvn gatling:test \
-  -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+  -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=10 \
   -Dperf.duration=60 \
   -Dperf.type=load
@@ -136,7 +136,7 @@ mvn gatling:test \
 ```bash
 export WEATHER_API_KEY=your_api_key
 mvn gatling:test \
-  -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+  -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=50 \
   -Dperf.duration=120 \
   -Dperf.type=stress
@@ -146,7 +146,7 @@ mvn gatling:test \
 ```bash
 export WEATHER_API_KEY=your_api_key
 mvn gatling:test \
-  -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+  -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=100 \
   -Dperf.type=spike
 ```
@@ -155,7 +155,7 @@ mvn gatling:test \
 ```bash
 # E-commerce API doesn't require WEATHER_API_KEY
 mvn gatling:test \
-  -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
+  -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
   -Dperf.users=10
 ```
 

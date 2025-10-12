@@ -1,4 +1,4 @@
-package com.example.performance.tests;
+package com.example.performance.junit.tests;
 
 import com.example.config.TestConfig;
 import com.example.performance.config.PerformanceConfig;
@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.concurrent.*;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**

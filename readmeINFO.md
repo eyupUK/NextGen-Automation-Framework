@@ -85,7 +85,7 @@ This repository provides a unified automation framework for UI, API, accessibili
 - UI/API default: `com.example.runners.CukesRunner`
 - Accessibility only: `com.example.runners.AccessibilityCukesRunner` (tags: `@accessibility`)
 - Security suite: `com.example.runners.SecurityCukesRunner` (tags: `@security`)
-- Performance (JUnit suite): `com.example.runners.PerformanceRunner`
+- Performance (JUnit suite): `com.example.runners.PerformanceJUnitRunner`
 - Performance (Cucumber): `com.example.runners.PerformanceCukesRunner` (default tags: `@performance`)
 
 You can run them from the IDE or with Surefire includes already configured in `pom.xml`.
@@ -142,7 +142,7 @@ export WEATHER_API_KEY=your_api_key
 
 # Or run directly with Maven
 mvn gatling:test \
-  -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+  -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=5 -Dperf.duration=30
 ```
 

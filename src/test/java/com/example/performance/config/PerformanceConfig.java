@@ -26,8 +26,9 @@ public class PerformanceConfig {
 
     // Performance Test Parameters (can be overridden via env or system properties)
     public static final int USERS = getIntOrDefault("perf.users", 10);
-    public static final int RAMP_UP_TIME = getIntOrDefault("perf.rampup", 10);
+    public static final int RAMP_UP_TIME = getIntOrDefault("perf.rampUp", 10);
     public static final int DURATION = getIntOrDefault("perf.duration", 60);
+
 
     // SLA Thresholds (in milliseconds)
     public static final int RESPONSE_TIME_P95_THRESHOLD = 2000; // 95th percentile
@@ -42,7 +43,11 @@ public class PerformanceConfig {
      * Get Weather API Key - evaluated at runtime to ensure environment variables are loaded
      */
     public static String getWeatherApiKey() {
-        String key = ConfigurationReader.get("WEATHER_API_KEY");
+        String key = System.getenv("WEATHER_API_KEY") != null ?
+                System.getenv("WEATHER_API_KEY") :
+                (System.getProperty("WEATHER_API_KEY") != null ?
+                        System.getProperty("WEATHER_API_KEY") :
+                        "");
         if (key == null || key.isEmpty()) {
             throw new IllegalStateException("WEATHER_API_KEY is not set. Please set it as an environment variable or system property.");
         }

@@ -43,8 +43,8 @@ echo "Checking performance test files:"
 
 FILES=(
     "src/test/java/com/example/performance/config/PerformanceConfig.java"
-    "src/test/java/com/example/performance/simulations/WeatherApiPerformanceSimulation.java"
-    "src/test/java/com/example/performance/simulations/EcommerceApiPerformanceSimulation.java"
+    "src/test/java/com/example/performance/gatling/simulations/WeatherApiPerformanceSimulation.java"
+    "src/test/java/com/example/performance/gatling/simulations/EcommerceApiPerformanceSimulation.java"
     "src/test/java/com/example/performance/tests/WeatherApiPerformanceTest.java"
     "src/test/java/com/example/performance/utils/PerformanceMetricsCollector.java"
     "src/test/java/com/example/performance/utils/LoadGenerator.java"

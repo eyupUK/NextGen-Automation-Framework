@@ -49,16 +49,16 @@ This framework includes comprehensive performance testing capabilities using ind
 #### Run Weather API Performance Test
 ```bash
 # Basic load test (default)
-mvn gatling:test -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation
+mvn gatling:test -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation
 
 # Stress test
-mvn gatling:test -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation -Dperf.type=stress
+mvn gatling:test -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation -Dperf.type=stress
 
 # Spike test
-mvn gatling:test -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation -Dperf.type=spike
+mvn gatling:test -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation -Dperf.type=spike
 
 # Custom parameters
-mvn gatling:test -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+mvn gatling:test -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
   -Dperf.users=50 \
   -Dperf.rampup=30 \
   -Dperf.duration=120
@@ -66,7 +66,7 @@ mvn gatling:test -Dgatling.simulationClass=com.example.performance.simulations.W
 
 #### Run E-commerce API Performance Test
 ```bash
-mvn gatling:test -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation
+mvn gatling:test -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation
 ```
 
 ### Using JUnit Performance Tests
@@ -256,7 +256,7 @@ Performance tests can run in CI/CD:
 
 ```yaml
 - name: Run Performance Tests
-  run: mvn gatling:test -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation
+  run: mvn gatling:test -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation
 
 - name: Archive Performance Reports
   uses: actions/upload-artifact@v3

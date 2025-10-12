@@ -1,13 +1,12 @@
 package com.example.runners;
 
-import com.example.contract.WeatherApiConsumerPactTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 /**
  * JUnit suite runner for performance test suites.
  * Run with:
- *   mvn -Dtest=ContractRunner test
+ *   mvn -Dtest=ContractJUnitRunner test
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
@@ -19,5 +18,5 @@ import org.junit.runners.Suite;
         com.example.contract.WeatherApiInvalidLocationPactTest.class,
         com.example.contract.WeatherApiZipCodePactTest.class
 })
-public class ContractRunner {
+public class ContractJUnitRunner {
 }

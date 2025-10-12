@@ -37,6 +37,46 @@ public class PerformanceExampleSteps {
         }
     }
 
+    @When("I run the heavy load performance example")
+    public void i_run_the_heavy_load_performance_example() {
+        try {
+            lastError = null;
+            PerformanceTestingExamples.multiEndpointTest();
+        } catch (Throwable t) {
+            lastError = t;
+        }
+    }
+
+    @When("I run the spike load performance example")
+    public void i_run_the_spike_load_performance_example() {
+        try {
+            lastError = null;
+            PerformanceTestingExamples.concurrentUsersSimulation();
+        } catch (Throwable t) {
+            lastError = t;
+        }
+    }
+
+    @When("I run the stress test performance example")
+    public void i_run_the_stress_test_performance_example() {
+        try {
+            lastError = null;
+            PerformanceTestingExamples.throughputTest();
+        } catch (Throwable t) {
+            lastError = t;
+        }
+    }
+
+    @When("I run the endurance test performance example")
+    public void i_run_the_endurance_test_performance_example() {
+        try {
+            lastError = null;
+            PerformanceTestingExamples.throughputTest(); // Reuse throughputTest for endurance
+        } catch (Throwable t) {
+            lastError = t;
+        }
+    }
+
     @Then("it completes successfully")
     public void it_completes_successfully() {
         if (lastError != null) {
@@ -46,5 +86,3 @@ public class PerformanceExampleSteps {
     }
 
 }
-
-

@@ -1,25 +1,15 @@
-package com.example.performance.simulations;
+package com.example.performance.gatling.simulations;
 
 import com.example.performance.config.PerformanceConfig;
 import io.gatling.javaapi.core.*;
 import io.gatling.javaapi.http.*;
 
 import java.time.Duration;
+import java.util.List;
 
 import static io.gatling.javaapi.core.CoreDsl.*;
 import static io.gatling.javaapi.http.HttpDsl.*;
 
-/**
- * E-commerce API Performance Simulation (FakeStore API)
- *
- * Simulates realistic e-commerce user journeys:
- * - Browse products
- * - View product details
- * - Add to cart
- * - Create orders
- *
- * Tests CRUD operations under load
- */
 public class EcommerceApiPerformanceSimulation extends Simulation {
 
     private final HttpProtocolBuilder httpProtocol = http
@@ -28,10 +18,8 @@ public class EcommerceApiPerformanceSimulation extends Simulation {
             .contentTypeHeader("application/json")
             .userAgentHeader("Performance-Test-Suite/1.0");
 
-    // Feeder for dynamic test data
     private final FeederBuilder<String> productIdFeeder = csv("performance/product_ids.csv").circular();
 
-    // Scenario: Browse and View Products
     private final ScenarioBuilder browseProductsScenario = scenario("Browse Products")
             .exec(
                     http("Get All Products")
@@ -56,7 +44,6 @@ public class EcommerceApiPerformanceSimulation extends Simulation {
                             .check(jsonPath("$.price").exists())
             );
 
-    // Scenario: Shopping Cart Operations
     private final ScenarioBuilder cartOperationsScenario = scenario("Shopping Cart Operations")
             .exec(
                     http("Get All Carts")
@@ -75,31 +62,30 @@ public class EcommerceApiPerformanceSimulation extends Simulation {
                     http("Create New Cart")
                             .post("/carts")
                             .body(StringBody("""
-                                {
-                                    "userId": 1,
-                                    "date": "2025-10-08",
-                                    "products": [
-                                        {"productId": 1, "quantity": 2},
-                                        {"productId": 5, "quantity": 1}
-                                    ]
-                                }
-                                """))
+                                    {
+                                        "userId": 1,
+                                        "date": "2025-10-08",
+                                        "products": [
+                                            {"productId": 1, "quantity": 2},
+                                            {"productId": 5, "quantity": 1}
+                                        ]
+                                    }
+                                    """))
                             .check(status().is(200))
                             .check(jsonPath("$.id").exists())
                             .check(responseTimeInMillis().lte(2000))
             );
 
-    // Scenario: User Authentication Flow
     private final ScenarioBuilder authScenario = scenario("User Authentication")
             .exec(
                     http("Login User")
                             .post("/auth/login")
                             .body(StringBody("""
-                                {
-                                    "username": "johnd",
-                                    "password": "m38rmF$"
-                                }
-                                """))
+                                    {
+                                        "username": "johnd",
+                                        "password": "m38rmF$"
+                                    }
+                                    """))
                             .check(status().is(200))
                             .check(jsonPath("$.token").exists().saveAs("authToken"))
                             .check(responseTimeInMillis().lte(1000))
@@ -111,27 +97,33 @@ public class EcommerceApiPerformanceSimulation extends Simulation {
                             .check(status().is(200))
             );
 
-    // Mixed Load Profile - Realistic user distribution
+    // Injection profiles using PerformanceConfig
+    private final List<OpenInjectionStep> browseProductsProfile = List.of(
+            rampUsers(PerformanceConfig.USERS).during(Duration.ofSeconds(PerformanceConfig.RAMP_UP_TIME)),
+            constantUsersPerSec(PerformanceConfig.USERS).during(Duration.ofSeconds(PerformanceConfig.DURATION))
+    );
+
+    private final List<OpenInjectionStep> cartOperationsProfile = List.of(
+            rampUsers(PerformanceConfig.USERS / 2).during(Duration.ofSeconds(PerformanceConfig.RAMP_UP_TIME)),
+            constantUsersPerSec(PerformanceConfig.USERS / 2).during(Duration.ofSeconds(PerformanceConfig.DURATION))
+    );
+
+    private final List<OpenInjectionStep> authProfile = List.of(
+            rampUsers(PerformanceConfig.USERS / 4).during(Duration.ofSeconds(PerformanceConfig.RAMP_UP_TIME)),
+            constantUsersPerSec(PerformanceConfig.USERS / 4).during(Duration.ofSeconds(PerformanceConfig.DURATION))
+    );
+
     {
         setUp(
-                browseProductsScenario.injectOpen(
-                        rampUsers(PerformanceConfig.USERS).during(Duration.ofSeconds(30))
-                ).protocols(httpProtocol),
-
-                cartOperationsScenario.injectOpen(
-                        rampUsers(PerformanceConfig.USERS / 2).during(Duration.ofSeconds(30))
-                ).protocols(httpProtocol),
-
-                authScenario.injectOpen(
-                        rampUsers(PerformanceConfig.USERS / 4).during(Duration.ofSeconds(20))
-                ).protocols(httpProtocol)
+                browseProductsScenario.injectOpen(browseProductsProfile.toArray(new OpenInjectionStep[0])).protocols(httpProtocol),
+                cartOperationsScenario.injectOpen(cartOperationsProfile.toArray(new OpenInjectionStep[0])).protocols(httpProtocol),
+                authScenario.injectOpen(authProfile.toArray(new OpenInjectionStep[0])).protocols(httpProtocol)
         )
-        .assertions(
-                global().responseTime().percentile3().lte(2000),
-                global().responseTime().percentile4().lte(3000),
-                global().successfulRequests().percent().gte(95.0),
-                forAll().failedRequests().percent().lte(5.0)
-        );
+                .assertions(
+                        global().responseTime().percentile3().lte(2000),
+                        global().responseTime().percentile4().lte(3000),
+                        global().successfulRequests().percent().gte(95.0),
+                        forAll().failedRequests().percent().lte(5.0)
+                );
     }
 }
-

@@ -62,7 +62,7 @@ jobs:
         run: |
           mvn -B -ntp gatling:test \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
-            -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+            -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=20 \
             -Dperf.rampup=30 \
             -Dperf.duration=300 \
@@ -71,7 +71,7 @@ jobs:
       - name: Run E-commerce API Load Test
         run: |
           mvn -B -ntp gatling:test \
-            -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
+            -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=15 \
             -Dperf.rampup=20
 

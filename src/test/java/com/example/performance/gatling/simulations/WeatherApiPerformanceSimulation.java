@@ -1,10 +1,11 @@
-package com.example.performance.simulations;
+package com.example.performance.gatling.simulations;
 
 import com.example.performance.config.PerformanceConfig;
 import io.gatling.javaapi.core.*;
 import io.gatling.javaapi.http.*;
 
 import java.time.Duration;
+import java.util.List;
 
 import static io.gatling.javaapi.core.CoreDsl.*;
 import static io.gatling.javaapi.http.HttpDsl.*;
@@ -81,42 +82,45 @@ public class WeatherApiPerformanceSimulation extends Simulation {
             .pause(Duration.ofSeconds(2), Duration.ofSeconds(4));
 
     // Load Test Profile: Gradual ramp-up
-    private final OpenInjectionStep loadTestProfile = rampUsers(PerformanceConfig.USERS)
-            .during(Duration.ofSeconds(PerformanceConfig.RAMP_UP_TIME));
+    private final List<OpenInjectionStep> loadTestProfile = List.of(
+            rampUsers(PerformanceConfig.USERS).during(Duration.ofSeconds(PerformanceConfig.RAMP_UP_TIME)),
+            constantUsersPerSec(PerformanceConfig.USERS).during(Duration.ofSeconds(PerformanceConfig.DURATION))
+    );
 
     // Stress Test Profile: Heavy load
-    private final OpenInjectionStep stressTestProfile =
-            constantUsersPerSec(5).during(Duration.ofSeconds(60));
+    private final List<OpenInjectionStep> stressTestProfile = List.of(
+            rampUsers(PerformanceConfig.USERS).during(Duration.ofSeconds(PerformanceConfig.RAMP_UP_TIME)),
+            constantUsersPerSec(PerformanceConfig.USERS * 2).during(Duration.ofSeconds(PerformanceConfig.DURATION))
+    );
 
     // Spike Test Profile: Sudden burst
-    private final OpenInjectionStep spikeTestProfile =
-            atOnceUsers(PerformanceConfig.USERS);
+    private final List<OpenInjectionStep> spikeTestProfile = List.of(
+            atOnceUsers(PerformanceConfig.USERS),
+            rampUsers(PerformanceConfig.SPIKE_USERS).during(Duration.ofSeconds(PerformanceConfig.RAMP_UP_TIME)),
+            constantUsersPerSec( PerformanceConfig.USERS / 2).during(Duration.ofSeconds(PerformanceConfig.DURATION))
+    );
+
+
 
     {
         // Setup scenarios with injection profiles
         // Choose test type via system property: -Dperf.type=load|stress|spike
         String testType = System.getProperty("perf.type", "load");
 
-        OpenInjectionStep injectionProfile;
-        switch (testType.toLowerCase()) {
-            case "stress":
-                injectionProfile = stressTestProfile;
-                break;
-            case "spike":
-                injectionProfile = spikeTestProfile;
-                break;
-            default:
-                injectionProfile = loadTestProfile;
-                break;
-        }
+        OpenInjectionStep[] injectionProfile = switch (testType.toLowerCase()) {
+            case "stress" -> stressTestProfile.toArray(new OpenInjectionStep[0]);
+            case "spike" -> spikeTestProfile.toArray(new OpenInjectionStep[0]);
+            default -> loadTestProfile.toArray(new OpenInjectionStep[0]);
+        };
 
         setUp(
                 currentWeatherScenario.injectOpen(injectionProfile).protocols(httpProtocol),
                 forecastScenario.injectOpen(
                         rampUsers(PerformanceConfig.USERS / 2)
-                                .during(Duration.ofSeconds(PerformanceConfig.RAMP_UP_TIME))
+                                .during(Duration.ofSeconds(PerformanceConfig.DURATION))
                 ).protocols(httpProtocol)
         )
+
                 // Global assertions for SLA validation
                 .assertions(
                         global().responseTime().percentile3().lte(PerformanceConfig.RESPONSE_TIME_P95_THRESHOLD),

@@ -1,9 +1,8 @@
 package com.example.steps.performance;
 
 import com.example.config.TestConfig;
-import com.example.performance.tests.WeatherApiPerformanceTest;
+import com.example.performance.junit.tests.WeatherApiPerformanceTest;
 import com.example.util.ConfigurationReader;
-import io.cucumber.java.PendingException;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;

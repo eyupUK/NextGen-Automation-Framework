@@ -16,7 +16,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Default values
-USERS=10
+USERS=20
 RAMPUP=10
 DURATION=60
 TEST_TYPE="load"
@@ -36,6 +36,29 @@ print_message() {
     echo -e "${color}${message}${NC}"
 }
 
+# Open the latest Gatling report (helper)
+open_latest_report() {
+    # Give filesystem a brief moment to flush
+    sleep 1
+    local latest
+    latest=$(find target/gatling-results -name "index.html" -type f -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1)
+
+    if [[ -z "$latest" ]]; then
+        print_message "$RED" "No Gatling reports found. Run a test first."
+        return 1
+    fi
+
+    print_message "$GREEN" "Opening: $latest"
+
+    if command -v open >/dev/null 2>&1; then
+        open "$latest"
+    elif command -v xdg-open >/dev/null 2>&1; then
+        xdg-open "$latest"
+    else
+        print_message "$YELLOW" "Please open manually: $latest"
+    fi
+}
+
 # Display usage
 usage() {
     cat << EOF
@@ -51,7 +74,7 @@ COMMANDS:
     report            Open last Gatling report
 
 OPTIONS:
-    -u, --users NUM       Number of concurrent users (default: 10)
+    -u, --users NUM       Number of concurrent users (default: 20)
     -r, --rampup SEC      Ramp-up time in seconds (default: 10)
     -d, --duration SEC    Test duration in seconds (default: 60)
     -t, --type TYPE       Test type: load|stress|spike (default: load)
@@ -110,11 +133,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Check if command is provided
+# If no command provided, default to weather-api for convenience
 if [ -z "$COMMAND" ]; then
-    print_message "$RED" "Error: No command specified"
-    usage
-    exit 1
+    print_message "$YELLOW" "No command specified. Defaulting to 'weather-api'. Use -h for help."
+    COMMAND="weather-api"
 fi
 
 # Execute command
@@ -131,14 +153,15 @@ case $COMMAND in
         print_message "$BLUE" "========================================="
 
         mvn "${mvn_args[@]}" gatling:test \
-            -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
-            -Dperf.users=$USERS \
-            -Dperf.rampup=$RAMPUP \
-            -Dperf.duration=$DURATION \
-            -Dperf.type=$TEST_TYPE
+            -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
+            -Dperf.users="$USERS" \
+            -Dperf.rampup="$RAMPUP" \
+            -Dperf.duration="$DURATION" \
+            -Dperf.type="$TEST_TYPE"
 
         print_message "$GREEN" "\n✔ Performance test completed!"
         print_message "$YELLOW" "Report location: target/gatling-results/"
+        open_latest_report || true
         ;;
 
     ecommerce-api)
@@ -148,14 +171,19 @@ case $COMMAND in
         print_message "$YELLOW" "Configuration:"
         echo "  Users: $USERS"
         echo "  Ramp-up: ${RAMPUP}s"
+        echo "  Duration: ${DURATION}s"
+        echo "  Test Type: $TEST_TYPE"
         print_message "$BLUE" "========================================="
 
         mvn gatling:test \
-            -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
-            -Dperf.users=$USERS \
-            -Dperf.rampup=$RAMPUP
+            -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
+            -Dperf.users="$USERS" \
+            -Dperf.rampup="$RAMPUP" \
+            -Dperf.duration="$DURATION" \
+            -Dperf.type="$TEST_TYPE"
 
         print_message "$GREEN" "\n✔ Performance test completed!"
+        open_latest_report || true
         ;;
 
     junit-perf)
@@ -164,8 +192,8 @@ case $COMMAND in
         print_message "$BLUE" "========================================="
 
         mvn "${mvn_args[@]}" test -Dtest=WeatherApiPerformanceTest \
-            -Dperf.users=$USERS \
-            -Dperf.duration=$DURATION
+            -Dperf.users="$USERS" \
+            -Dperf.duration="$DURATION"
 
         print_message "$GREEN" "\n✔ JUnit performance tests completed!"
         print_message "$YELLOW" "Results: target/performance-results/"
@@ -176,33 +204,16 @@ case $COMMAND in
         print_message "$BLUE" "Running All Gatling Simulations"
         print_message "$BLUE" "========================================="
 
-        mvn gatling:test -Dperf.users=$USERS
+        mvn gatling:test -Dperf.users="$USERS" -Dperf.rampup="$RAMPUP" -Dperf.duration="$DURATION" -Dperf.type="$TEST_TYPE"
 
         print_message "$GREEN" "\n✔ All simulations completed!"
+        open_latest_report || true
         ;;
 
     report)
         print_message "$BLUE" "Opening latest Gatling report..."
-
-        # Find the latest report
-        LATEST_REPORT=$(find target/gatling-results -name "index.html" -type f -print0 | xargs -0 ls -t | head -n 1)
-
-        if [ -z "$LATEST_REPORT" ]; then
-            print_message "$RED" "No Gatling reports found. Run a test first."
-            exit 1
-        fi
-
-        print_message "$GREEN" "Opening: $LATEST_REPORT"
-
-        # Open report based on OS
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            open "$LATEST_REPORT"
-        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-            xdg-open "$LATEST_REPORT"
-        else
-            print_message "$YELLOW" "Please open manually: $LATEST_REPORT"
-        fi
+        open_latest_report
         ;;
-esac
+ esac
 
 print_message "$GREEN" "\nDone! 🚀"

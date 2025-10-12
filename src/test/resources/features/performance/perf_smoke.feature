@@ -21,3 +21,20 @@ Feature: Performance Smoke Checks
   Scenario: Run ramp-up example
     When I run the ramp-up performance example
     Then it completes successfully
+
+  Scenario: Run heavy load example
+    When I run the heavy load performance example
+    Then it completes successfully
+
+  Scenario: Run spike load example
+    When I run the spike load performance example
+    Then it completes successfully
+
+  Scenario: Run stress test example
+    When I run the stress test performance example
+    Then it completes successfully
+
+  Scenario: Run endurance test example
+    When I run the endurance test performance example
+    Then it completes successfully
+

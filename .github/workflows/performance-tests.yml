@@ -102,7 +102,7 @@ jobs:
           set +e
           mvn -B -ntp gatling:test \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
-            -Dgatling.simulationClass=com.example.performance.simulations.WeatherApiPerformanceSimulation \
+            -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ env.USERS }} \
             -Dperf.duration=${{ env.DURATION }} \
             -Dperf.type=${{ env.TEST_TYPE }}
@@ -116,7 +116,7 @@ jobs:
         run: |
           set +e
           mvn -B -ntp gatling:test \
-            -Dgatling.simulationClass=com.example.performance.simulations.EcommerceApiPerformanceSimulation \
+            -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=${{ env.USERS }}
           code=$?
           echo "exitcode=$code" >> "$GITHUB_OUTPUT"
