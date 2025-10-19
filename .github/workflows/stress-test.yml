@@ -19,7 +19,11 @@ on:
         default: false
         type: boolean
   push:
-    branches: [ main, master ]
+    # update to x branch name as needed
+    branches: [ x ]
+#    branches: [ main, master, complete-ci-implementation ]
+#  pull_request:
+#    branches: [ main, master ]
 
 permissions:
   contents: read
