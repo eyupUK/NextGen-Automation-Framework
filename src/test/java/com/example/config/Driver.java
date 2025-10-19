@@ -11,12 +11,10 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.safari.SafariOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class Driver {
 
@@ -29,24 +27,56 @@ public class Driver {
                     final String configured = System.getProperty("browser", ConfigurationReader.get("browser"));
                     final String browser = configured == null ? "chrome" : configured.trim().toLowerCase();
 
+                    // Support remote Selenium Grid/Standalone when provided via system property or env var
+                    String remoteUrl = System.getProperty("webdriver.remote.url");
+                    if (remoteUrl == null || remoteUrl.isBlank()) {
+                        remoteUrl = System.getenv("SELENIUM_URL");
+                    }
+                    final boolean useRemote = remoteUrl != null && !remoteUrl.isBlank();
+
                     switch (browser) {
                         case "chrome":
                         case "chrome-headless":
                         case "chrome-local":
-                            TL_DRIVER.set(new ChromeDriver(buildChromeOptions(resolveHeadlessDefault(browser))));
+                            if (useRemote) {
+                                try {
+                                    ChromeOptions opts = buildChromeOptions(resolveHeadlessDefault(browser));
+                                    TL_DRIVER.set(new RemoteWebDriver(new URL(remoteUrl), opts));
+                                } catch (MalformedURLException e) {
+                                    throw new WebDriverException("Invalid webdriver.remote.url: " + remoteUrl, e);
+                                }
+                            } else {
+                                TL_DRIVER.set(new ChromeDriver(buildChromeOptions(resolveHeadlessDefault(browser))));
+                            }
                             break;
 
                         case "firefox": {
                             FirefoxOptions ff = new FirefoxOptions();
                             ff.setAcceptInsecureCerts(true);
-                            TL_DRIVER.set(new FirefoxDriver(ff));
+                            if (useRemote) {
+                                try {
+                                    TL_DRIVER.set(new RemoteWebDriver(new URL(remoteUrl), ff));
+                                } catch (MalformedURLException e) {
+                                    throw new WebDriverException("Invalid webdriver.remote.url: " + remoteUrl, e);
+                                }
+                            } else {
+                                TL_DRIVER.set(new FirefoxDriver(ff));
+                            }
                             break;
                         }
                         case "firefox-headless": {
                             FirefoxOptions ff = new FirefoxOptions();
                             ff.addArguments("-headless");
                             ff.setAcceptInsecureCerts(true);
-                            TL_DRIVER.set(new FirefoxDriver(ff));
+                            if (useRemote) {
+                                try {
+                                    TL_DRIVER.set(new RemoteWebDriver(new URL(remoteUrl), ff));
+                                } catch (MalformedURLException e) {
+                                    throw new WebDriverException("Invalid webdriver.remote.url: " + remoteUrl, e);
+                                }
+                            } else {
+                                TL_DRIVER.set(new FirefoxDriver(ff));
+                            }
                             break;
                         }
                         case "edge": {
@@ -67,7 +97,15 @@ public class Driver {
                         }
                         default:
                             // Default to Chrome with CI-safe options
-                            TL_DRIVER.set(new ChromeDriver(buildChromeOptions(resolveHeadlessDefault("chrome"))));
+                            if (useRemote) {
+                                try {
+                                    TL_DRIVER.set(new RemoteWebDriver(new URL(remoteUrl), buildChromeOptions(resolveHeadlessDefault("chrome"))));
+                                } catch (MalformedURLException e) {
+                                    throw new WebDriverException("Invalid webdriver.remote.url: " + remoteUrl, e);
+                                }
+                            } else {
+                                TL_DRIVER.set(new ChromeDriver(buildChromeOptions(resolveHeadlessDefault("chrome"))));
+                            }
                     }
                 }
             }
