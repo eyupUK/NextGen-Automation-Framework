@@ -6,6 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="task_insurwave" />
         <module name="test_automation_framework" />
         <module name="cucumber-selenium-rest_assured-gatling" />
       </profile>

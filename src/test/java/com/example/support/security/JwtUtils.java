@@ -22,12 +22,14 @@ public final class JwtUtils {
      * @return true if it looks like three base64url parts separated by dots
      */
     public static boolean isLikelyJwt(String token) {
+        System.out.println(token);
         if (token == null) return false;
         String[] parts = token.split("\\.");
         if (parts.length != 3) return false;
         // Basic base64url check: only URL-safe characters
         for (String p : parts) {
             if (p.isEmpty()) return false;
+            System.out.println(p);
             if (!p.matches("[A-Za-z0-9_-]+")) return false;
         }
         return true;
@@ -38,6 +40,7 @@ public final class JwtUtils {
      */
     public static JsonObject decodeHeader(String jwt) {
         String json = decodePartToString(jwt, 0);
+        System.out.printf("\npart 0: %s", json);
         return safeParse(json);
     }
 
@@ -46,6 +49,7 @@ public final class JwtUtils {
      */
     public static JsonObject decodePayload(String jwt) {
         String json = decodePartToString(jwt, 1);
+        System.out.printf("\npart 1: %s", json);
         return safeParse(json);
     }
 

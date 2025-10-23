@@ -1,4 +1,4 @@
-@security @web
+@security @web @api
 Feature: SauceDemo.com Security Checks
 
    As a security-focused web tester

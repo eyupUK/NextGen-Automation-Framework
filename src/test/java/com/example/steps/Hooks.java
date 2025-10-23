@@ -87,8 +87,8 @@ public class Hooks {
             } catch (Throwable ignored) { /* attach may vary by formatter; best-effort */ }
         }
 
-        boolean isApi = scenario.getSourceTagNames().contains("@api");
-        if (!isApi) {
+        boolean isUi = scenario.getSourceTagNames().contains("@ui");
+        if (isUi) {
             driver = Driver.get();
             driver.manage().window().maximize();
 //            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
@@ -104,8 +104,8 @@ public class Hooks {
      */
     @After
     public void tearDown(Scenario scenario) {
-        boolean isApi = scenario.getSourceTagNames().contains("@api");
-        if (!isApi && driver != null) {
+        boolean isUi = scenario.getSourceTagNames().contains("@ui");
+        if (isUi && driver != null) {
             if (scenario.isFailed()) {
                 final byte[] screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
                 scenario.attach(screenshot, "image/png", "Failure_Screenshot");

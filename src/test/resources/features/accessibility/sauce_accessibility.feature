@@ -1,4 +1,4 @@
-@accessibility
+@accessibility @ui
 Feature: Accessibility Testing For SauceDemo
   As a quality engineer
   I want to ensure key pages of SauceDemo meet accessibility standards
