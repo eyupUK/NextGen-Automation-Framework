@@ -25,3 +25,9 @@ Feature: Checkout Flow on SauceDemo
     And I provide checkout details "John" , "Doe" , "AB12CD" and continue
     And I finish the checkout
     Then I should see the order completion page
+
+  Scenario: Complete a checkout flow by buying the item with the highest price
+    When I add the highest priced item to my cart and start checkout
+    And I provide checkout details "John" , "Doe" , "AB12CD" and continue
+    And I finish the checkout
+    Then I should see the order completion page

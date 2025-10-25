@@ -27,6 +27,17 @@ public class CheckoutSteps {
         Assert.assertTrue("Checkout info page not loaded.", info.isLoaded());
     }
 
+    @When("I add the highest priced item to my cart and start checkout")
+    public void i_add_highest_priced_item_and_start_checkout() {
+        // Add the highest priced item
+        inventory.addHighestPriceItemToCart();
+        Assert.assertEquals("Cart badge mismatch after adding highest priced item", 1, inventory.getCartBadgeCount().intValue());
+        inventory.openCart();
+        Assert.assertTrue("Cart page not loaded.", cart.isLoaded());
+        cart.proceedToCheckout();
+        Assert.assertTrue("Checkout info page not loaded.", info.isLoaded());
+    }
+
     @When("I provide checkout details {string} , {string} , {string} and continue")
     public void i_provide_checkout_details_and_continue(String first, String last, String zip) {
         info.fillInfo(first, last, zip).continueToOverview();

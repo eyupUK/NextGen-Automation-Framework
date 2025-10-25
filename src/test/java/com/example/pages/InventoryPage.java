@@ -24,7 +24,7 @@ public class InventoryPage extends BasePage {private final By title = By.cssSele
     public void addProductToCartByName(String productName) {
         List<WebElement> items = driver.findElements(inventoryItem);
         WebElement target = items.stream()
-                .filter(it -> it.findElement(By.className("inventory_item_name"))
+                .filter(it -> it.findElement(productTitles)
                         .getText().equals(productName))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Product not found: " + productName));
@@ -39,9 +39,7 @@ public class InventoryPage extends BasePage {private final By title = By.cssSele
     public void openCart() { click(cartLink); }
 
     public List<String> getAllProductNames() {
-        return driver.findElements(inventoryItem).stream()
-                .map(it -> it.findElement(By.className("inventory_item_name")).getText())
-                .collect(Collectors.toList());
+        return texts(productTitles);
     }
 
     public void sortByVisibleText(String visibleText) {
@@ -49,8 +47,7 @@ public class InventoryPage extends BasePage {private final By title = By.cssSele
     }
 
     public List<Double> getAllPricesInOrder() {
-        return driver.findElements(priceLabel).stream()
-                .map(WebElement::getText)          // e.g. "$29.99"
+        return texts(priceLabel).stream()// e.g. "$29.99"
                 .map(p -> p.replaceAll("[^0-9.]", ""))
                 .map(Double::parseDouble)
                 .collect(Collectors.toList());
@@ -58,7 +55,7 @@ public class InventoryPage extends BasePage {private final By title = By.cssSele
 
     public Integer findHighestPriceIndex(List<Double> prices){
         int indexHighest = 0;
-        double highest = prices.get(0);
+        double highest = prices.getFirst();
         for (int i = 0; i < prices.size(); i++){
             if(highest < prices.get(i)){
                 highest = prices.get(i);
@@ -82,9 +79,9 @@ public class InventoryPage extends BasePage {private final By title = By.cssSele
 
     public List<Double> getAllPricesInOrderByLoop() {
         List<Double> prices = new ArrayList<>();
-        List<WebElement> elements = driver.findElements(priceLabel);
-        for (WebElement e: elements) {
-            prices.add(Double.parseDouble(e.getText().replace("$", "")));
+        List<String> strings = texts(priceLabel);
+        for (String price: strings) {
+            prices.add(Double.parseDouble(price.replaceAll("[^0-9.]", "")));
         }
         return prices;
     }

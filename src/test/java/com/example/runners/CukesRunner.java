@@ -14,7 +14,7 @@ import org.junit.runner.RunWith;
 @RunWith(Cucumber.class)
 @CucumberOptions(
 
-        /**
+        /*
          * The {@code plugin} attribute specifies the plugins to be used for generating reports and other artifacts.
          * The following plugins are configured:
          *     {@code pretty}: Prints the feature file and step definitions to the console.

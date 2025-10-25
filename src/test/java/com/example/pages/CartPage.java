@@ -14,9 +14,7 @@ public class CartPage extends BasePage {
     public boolean isLoaded() { return text(cartTitle).equals("Your Cart"); }
 
     public List<String> itemNames() {
-        return driver.findElements(cartItems).stream()
-                .map(e -> e.findElement(itemName).getText())
-                .collect(Collectors.toList());
+        return texts(itemName);
     }
 
     public void proceedToCheckout() { click(checkoutBtn); }

@@ -35,12 +35,12 @@ Feature: Weather API Security Checks
     When I request current weather for "<payload>" with a valid API key
     Then the response status is not a server error
     Examples:
-      | payload                     |
-      | ' OR '1'='1                 |
-      | <script>alert(1)</script>   |
-      | London; DROP TABLE users;   |
-      | %27%20OR%201=1--            |
-      | \ud83d\ude42                           |
+      | payload                   |
+      | ' OR '1'='1               |
+      | <script>alert(1)</script> |
+      | London; DROP TABLE users; |
+      | %27%20OR%201=1--          |
+      | \ud83d\ude42              |
 
   @requires_key
   Scenario: API response exposes basic security headers
@@ -64,9 +64,9 @@ Feature: Weather API Security Checks
     And the response header "Access-Control-Allow-Methods" contains "<method>"
     And the response header "Access-Control-Allow-Headers" contains all of "<headers>"
     Examples:
-      | origin                 | method | headers                      |
-      | https://example.com    | GET    | Content-Type, Accept         |
-      | https://myapp.example  | POST   | Content-Type, X-Custom-Auth  |
+      | origin                | method | headers                     |
+      | https://example.com   | GET    | Content-Type, Accept        |
+      | https://myapp.example | POST   | Content-Type, X-Custom-Auth |
 
   # Negative CORS case: disallowed origin should not be echoed
   @requires_key

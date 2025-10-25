@@ -28,7 +28,7 @@ public class FakeStorePerformanceTest {
             baseUrl = "https://fakestoreapi.com";
         }
         spec = new RequestSpecBuilder().setBaseUri(baseUrl).build();
-        exec = Executors.newFixedThreadPool(10);
+        exec = Executors.newFixedThreadPool(10); // count of VUs
     }
 
     @After
@@ -44,6 +44,7 @@ public class FakeStorePerformanceTest {
         int requests = 100;
         List<Future<Response>> futures = new ArrayList<>(requests);
         AtomicInteger success = new AtomicInteger();
+        AtomicInteger error = new AtomicInteger();
 
         for (int i = 0; i < requests; i++) {
             futures.add(exec.submit(() -> given().spec(spec).get("/products")));
@@ -54,10 +55,13 @@ public class FakeStorePerformanceTest {
                 if (r.statusCode() == 200) success.incrementAndGet();
             } catch (Exception e) {
                 // ignore; counted as failure
+                error.incrementAndGet();
             }
         }
         double rate = success.get() / (double) requests;
+        double errorRate = error.get() / (double) requests;
         System.out.println("FakeStore /products success rate: " + String.format("%.2f%%", rate * 100));
+        System.out.println("FakeStore /products error rate: " + String.format("%.2f%%", errorRate * 100));
         assertTrue("Success rate below 95%", rate >= 0.95);
     }
 

@@ -6,6 +6,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
+import java.util.List;
 
 public abstract class BasePage {
     protected WebDriver driver;
@@ -39,6 +40,13 @@ public abstract class BasePage {
         return waitVisible(locator).getText();
     }
 
+    protected List<String> texts(By locator) {
+        waitVisible(locator);
+        return driver.findElements(locator).stream()
+                .map(WebElement::getText)
+                .toList();
+    }
+
     protected boolean isPresent(By locator) {
         try {
             driver.findElement(locator);
@@ -47,6 +55,7 @@ public abstract class BasePage {
             return false;
         }
     }
+
 
     protected void goTo(String url) {
         driver.get(url);
