@@ -55,7 +55,7 @@ public class InventoryPage extends BasePage {private final By title = By.cssSele
 
     public Integer findHighestPriceIndex(List<Double> prices){
         int indexHighest = 0;
-        double highest = prices.getFirst();
+        double highest = prices.get(0);
         for (int i = 0; i < prices.size(); i++){
             if(highest < prices.get(i)){
                 highest = prices.get(i);
