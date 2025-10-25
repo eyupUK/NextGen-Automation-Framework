@@ -51,6 +51,31 @@
                 </configuration>
             </plugin>
 
+            <!-- Enforce toolchain and basic hygiene -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <fail>true</fail>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[21,)</version>
+                                    <message>JDK 21+ is required. Detected java.version=${java.version}, maven.compiler.release=${maven.compiler.release}</message>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -356,6 +381,52 @@
                             <forkCount>1</forkCount>
                             <reuseForks>false</reuseForks>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- CI-only strictness: ban SNAPSHOT dependencies when CI=true -->
+        <profile>
+            <id>ci-enforcer</id>
+            <activation>
+                <property>
+                    <name>ci.enforce</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>3.4.1</version>
+                        <executions>
+                            <execution>
+                                <id>ban-snapshot-dependencies</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <fail>true</fail>
+                                    <rules>
+                                        <requireReleaseDeps>
+                                            <message>Snapshot dependencies are not allowed on CI.</message>
+                                        </requireReleaseDeps>
+                                        <requireMavenVersion>
+                                            <version>[3.9.0,)</version>
+                                            <message>Maven 3.9+ is required on CI.</message>
+                                        </requireMavenVersion>
+                                        <!-- If/when you want to require a release project version on CI, uncomment below:
+                                        <requireReleaseVersion>
+                                            <message>Project version must be a release (no -SNAPSHOT) on CI.</message>
+                                        </requireReleaseVersion>
+                                        -->
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>

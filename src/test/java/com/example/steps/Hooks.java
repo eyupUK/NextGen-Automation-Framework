@@ -2,6 +2,7 @@ package com.example.steps;
 
 import com.example.config.Driver;
 import com.example.util.OAuthConfig;
+import com.example.mock.MockServer;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
@@ -10,6 +11,8 @@ import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
 
@@ -23,6 +26,7 @@ public class Hooks {
      * Private static WebDriver instance to hold the driver instance.
      */
     private WebDriver driver;
+    private static MockServer MOCK;
 
     private static String mask(String value) {
         if (value == null || value.isBlank()) return "<empty>";
@@ -89,6 +93,18 @@ public class Hooks {
 
         boolean isUi = scenario.getSourceTagNames().contains("@ui");
         if (isUi) {
+            // Optional deterministic demo: start mock server and redirect base URL
+            if (Boolean.parseBoolean(System.getProperty("demo.mock", "false"))) {
+                try {
+                    MOCK = new MockServer();
+                    MOCK.start(0);
+                    String base = MOCK.baseUrl();
+                    System.setProperty("sauceDemoUrl", base);
+                    System.out.println("[Hooks] demo.mock enabled. sauceDemoUrl=" + base);
+                } catch (Throwable t) {
+                    System.out.println("[Hooks] Failed to start MockServer: " + t.getMessage());
+                }
+            }
             driver = Driver.get();
             driver.manage().window().maximize();
 //            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
@@ -106,15 +122,42 @@ public class Hooks {
     public void tearDown(Scenario scenario) {
         boolean isUi = scenario.getSourceTagNames().contains("@ui");
         if (isUi && driver != null) {
+            Path screenshotsDir = Path.of("target", "screenshots");
+            String name = scenario.getName().replaceAll("[^a-zA-Z0-9_-]", "_");
             if (scenario.isFailed()) {
                 final byte[] screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
                 scenario.attach(screenshot, "image/png", "Failure_Screenshot");
+                // Also write the screenshot to target/screenshots for CI art   ifact upload
+                try {
+                    Files.createDirectories(screenshotsDir);
+                    String filename = String.format("%s_failed_%d.png", name, System.currentTimeMillis());
+                    Path out = screenshotsDir.resolve(filename);
+                    Files.write(out, screenshot);
+                    System.out.println("Saved failure screenshot to: " + out.toAbsolutePath());
+                } catch (Throwable t) {
+                    System.out.println("Failed to write screenshot artifact: " + t.getMessage());
+                }
             } else {
                 final byte[] screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
                 scenario.attach(screenshot, "image/png", "Proof_of_Expected_Result");
                 System.out.println("Test completed successfully");
+                // Save success screenshot as well for demo artifacts
+                try {
+                    Files.createDirectories(screenshotsDir);
+                    String filename = String.format("%s_success_%d.png", name, System.currentTimeMillis());
+                    Path out = screenshotsDir.resolve(filename);
+                    Files.write(out, screenshot);
+                    System.out.println("Saved success screenshot to: " + out.toAbsolutePath());
+                } catch (Throwable t) {
+                    System.out.println("Failed to write success screenshot artifact: " + t.getMessage());
+                }
             }
             Driver.closeDriver();
+        }
+        // Stop mock server if started
+        if (MOCK != null) {
+            try { MOCK.stop(); } catch (Throwable ignored) {}
+            MOCK = null;
         }
         CURRENT_SCENARIO.remove();
     }

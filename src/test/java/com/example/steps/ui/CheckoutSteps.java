@@ -1,14 +1,12 @@
 package com.example.steps.ui;
 
 import com.example.pages.*;
-import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Assert;
 
 public class CheckoutSteps {
 
-    LoginPage login = new LoginPage();
     InventoryPage inventory = new InventoryPage();
     CartPage cart = new CartPage();
     CheckoutInfoPage info = new CheckoutInfoPage();

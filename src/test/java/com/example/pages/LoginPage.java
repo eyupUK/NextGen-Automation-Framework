@@ -1,6 +1,7 @@
 package com.example.pages;
 
 import org.openqa.selenium.By;
+import com.example.util.ConfigurationReader;
 
 public class LoginPage extends BasePage {
 
@@ -12,7 +13,11 @@ public class LoginPage extends BasePage {
 
 
     public LoginPage open() {
-        goTo("https://www.saucedemo.com/");
+        String base = ConfigurationReader.get("sauceDemoUrl");
+        if (base == null || base.isBlank()) {
+            base = "https://www.saucedemo.com/";
+        }
+        goTo(base);
         return this;
     }
 

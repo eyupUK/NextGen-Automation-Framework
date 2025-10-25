@@ -6,7 +6,6 @@ import org.openqa.selenium.support.ui.Select;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class InventoryPage extends BasePage {private final By title = By.cssSelector(".title");
@@ -54,11 +53,15 @@ public class InventoryPage extends BasePage {private final By title = By.cssSele
     }
 
     public Integer findHighestPriceIndex(List<Double> prices){
+        if (prices == null || prices.isEmpty()) {
+            throw new IllegalArgumentException("No prices available to determine highest price");
+        }
         int indexHighest = 0;
         double highest = prices.get(0);
-        for (int i = 0; i < prices.size(); i++){
-            if(highest < prices.get(i)){
-                highest = prices.get(i);
+        for (int i = 1; i < prices.size(); i++){
+            double p = prices.get(i);
+            if(highest < p){
+                highest = p;
                 indexHighest = i;
             }
         }
