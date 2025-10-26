@@ -15,11 +15,14 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 public class Driver {
 
     private static final ThreadLocal<WebDriver> TL_DRIVER = new ThreadLocal<>();
-
+    private Driver() {}
     public static WebDriver get() {
         if (TL_DRIVER.get() == null) {
             synchronized (Driver.class) {
@@ -136,7 +139,7 @@ public class Driver {
         ChromeOptions options = new ChromeOptions();
 
         // Collect args so we can log them without calling non-existent getters
-        java.util.List<String> args = new java.util.ArrayList<>();
+        List<String> args = new ArrayList<>();
 
         if (headless) {
             args.add("--headless=new");
@@ -153,10 +156,10 @@ public class Driver {
         // Unique profile dir per session to avoid "user data directory is already in use"
         String baseUserDataDir = System.getProperty("chrome.userDataDir",
                 System.getProperty("java.io.tmpdir"));
-        java.nio.file.Path uniqueProfile =
-                java.nio.file.Path.of(baseUserDataDir, "chrome-profile-" + java.util.UUID.randomUUID());
+        Path uniqueProfile =
+                Path.of(baseUserDataDir, "chrome-profile-" + UUID.randomUUID());
         try {
-            java.nio.file.Files.createDirectories(uniqueProfile);
+            Files.createDirectories(uniqueProfile);
         } catch (Exception ignored) {}
         args.add("--user-data-dir=" + uniqueProfile.toAbsolutePath());
 
@@ -164,7 +167,7 @@ public class Driver {
         options.addArguments(args);
 
         // Disable password manager UI
-        java.util.Map<String, Object> prefs = new java.util.HashMap<>();
+        Map<String, Object> prefs = new HashMap<>();
         prefs.put("credentials_enable_service", false);
         prefs.put("profile.password_manager_enabled", false);
         options.setExperimentalOption("prefs", prefs);
