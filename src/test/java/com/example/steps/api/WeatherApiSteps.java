@@ -23,11 +23,18 @@ public class WeatherApiSteps {
 
     private final ScenarioState state = new ScenarioState();
 
+    private static boolean isLocalMockBase() {
+        String u = TestConfig.BASE_URL == null ? "" : TestConfig.BASE_URL.toLowerCase();
+        return u.startsWith("http://localhost") || u.startsWith("http://127.0.0.1");
+    }
+
     // ---------- Common/Given ----------
     @Given("I have a valid WeatherAPI key configured")
     public void i_have_a_valid_key() {
-        if (TestConfig.API_KEY == null || TestConfig.API_KEY.isBlank()) {
-            throw new IllegalStateException("Set WEATHER_API_KEY as env or -D system property");
+        if (!isLocalMockBase()) {
+            if (TestConfig.API_KEY == null || TestConfig.API_KEY.isBlank()) {
+                throw new IllegalStateException("Set WEATHER_API_KEY as env or -D system property");
+            }
         }
     }
 

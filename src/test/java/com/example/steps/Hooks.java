@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
+import com.example.mock.WeatherApiMockServer;
 
 public class Hooks {
 
@@ -27,6 +28,7 @@ public class Hooks {
      */
     private WebDriver driver;
     private static MockServer MOCK;
+    private static WeatherApiMockServer API_MOCK;
 
     private static String mask(String value) {
         if (value == null || value.isBlank()) return "<empty>";
@@ -92,6 +94,21 @@ public class Hooks {
         }
 
         boolean isUi = scenario.getSourceTagNames().contains("@ui");
+        boolean isApi = scenario.getSourceTagNames().contains("@api");
+
+        // Optional deterministic demo for API tests
+        if (isApi && Boolean.parseBoolean(System.getProperty("demo.mock.api", "false"))) {
+            try {
+                API_MOCK = new WeatherApiMockServer();
+                API_MOCK.start(0);
+                String base = API_MOCK.baseUrl();
+                System.setProperty("weather_api_base_url", base);
+                System.out.println("[Hooks] demo.mock.api enabled. weather_api_base_url=" + base);
+            } catch (Throwable t) {
+                System.out.println("[Hooks] Failed to start WeatherApiMockServer: " + t.getMessage());
+            }
+        }
+
         if (isUi) {
             // Optional deterministic demo: start mock server and redirect base URL
             if (Boolean.parseBoolean(System.getProperty("demo.mock", "false"))) {
@@ -154,10 +171,14 @@ public class Hooks {
             }
             Driver.closeDriver();
         }
-        // Stop mock server if started
+        // Stop mock servers if started
         if (MOCK != null) {
             try { MOCK.stop(); } catch (Throwable ignored) {}
             MOCK = null;
+        }
+        if (API_MOCK != null) {
+            try { API_MOCK.stop(); } catch (Throwable ignored) {}
+            API_MOCK = null;
         }
         CURRENT_SCENARIO.remove();
     }
