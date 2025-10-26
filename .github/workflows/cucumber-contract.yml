@@ -2,8 +2,8 @@ name: Contract Tests (ContractCukesRunner)
 
 on:
   push:
-    # update to x branch name as needed
-    branches: [ x ]
+    # update wip branch name as needed
+    branches: [ wip ]
 #    branches: [ main, master, complete-ci-implementation ]
 #  pull_request:
 #    branches: [ main, master ]

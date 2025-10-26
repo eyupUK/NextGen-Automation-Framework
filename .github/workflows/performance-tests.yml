@@ -25,7 +25,7 @@ on:
         options: [weather, ecommerce, all]
 
   push:
-    branches: [ x, complete-ci-implementation ]
+    branches: [ wip, complete-ci-implementation ]
 
 permissions:
   contents: read

@@ -1,11 +1,11 @@
 name: CI
 
 on:
-  # update to x branch name as needed
+  # update wip branch name as needed
   push:
-    branches: [ x ]
+    branches: [ wip ]
   pull_request:
-    branches: [ x ]
+    branches: [ wip ]
 
 permissions:
   contents: read
