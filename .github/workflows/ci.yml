@@ -32,9 +32,15 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+      - name: Prepare retry helper
+        run: |
+          echo '#!/usr/bin/env bash' > mvn-retry.sh
+          echo 'set -e' >> mvn-retry.sh
+          echo 'a=0; until [ $a -ge 3 ]; do ./mvnw -s .mvn/ci-settings.xml "$@" && break; a=$((a+1)); echo "Retry #$a in 5s..."; sleep 5; done' >> mvn-retry.sh
+          chmod +x mvn-retry.sh
       - name: Run SpotBugs + FindSecBugs and OWASP Dependency-Check
         run: |
-          ./mvnw -B -ntp -DskipTests=true -Psecurity-gate \
+          ./mvnw -B -ntp -s .mvn/ci-settings.xml -DskipTests=true -Psecurity-gate \
             -Ddependency-check.autoUpdate=true \
             verify
       - name: Upload Security Reports
@@ -83,7 +89,7 @@ jobs:
           EXTRA_ARGS=""
           if [ -n "$SONAR_PROJECT_KEY" ]; then EXTRA_ARGS="$EXTRA_ARGS -Dsonar.projectKey=$SONAR_PROJECT_KEY"; fi
           if [ -n "$SONAR_ORG" ]; then EXTRA_ARGS="$EXTRA_ARGS -Dsonar.organization=$SONAR_ORG"; fi
-          ./mvnw -B -ntp -DskipTests=true \
+          ./mvnw -B -ntp -s .mvn/ci-settings.xml -DskipTests=true \
             org.sonarsource.scanner.maven:sonar-maven-plugin:3.10.0.2594:sonar \
             -Dsonar.qualitygate.wait=true $EXTRA_ARGS
 
@@ -191,7 +197,7 @@ jobs:
         id: test
         run: |
           set +e
-          mvn -B -ntp clean test \
+          mvn -B -ntp -s .mvn/ci-settings.xml clean test \
           -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
           -Dcucumber.features=src/test/resources/features/api
           code=$?
@@ -297,13 +303,12 @@ jobs:
         uses: browser-actions/setup-chrome@v1
         with:
           chrome-version: stable
-
       - name: Run UI Tests (Headless Chrome)
         id: test
         run: |
           mkdir -p "$RUNNER_TEMP/chrome"
           set +e
-          mvn -B -ntp clean test \
+          mvn -B -ntp -s .mvn/ci-settings.xml clean test \
           -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
           -Dcucumber.features=src/test/resources/features/ui \
           -Dbrowser=chrome-headless

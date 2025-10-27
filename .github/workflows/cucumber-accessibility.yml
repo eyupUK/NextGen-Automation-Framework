@@ -38,7 +38,7 @@ jobs:
         id: test
         run: |
           set +e
-          mvn -B -Dheadless=true -Dtest=AccessibilityCukesRunner test
+          mvn -B -s .mvn/ci-settings.xml -Dheadless=true -Dtest=AccessibilityCukesRunner test
           code=$?
           echo "exitcode=$code" >> "$GITHUB_OUTPUT"
           exit 0
@@ -51,7 +51,7 @@ jobs:
           if [ -f target/rerun-accessibility.txt ]; then
             cp target/rerun-accessibility.txt target/rerun.txt
             set +e
-            mvn -B -Dheadless=true -Dtest=FailedTestRunner test
+            mvn -B -s .mvn/ci-settings.xml -Dheadless=true -Dtest=FailedTestRunner test
             code=$?
             echo "exitcode=$code" >> "$GITHUB_OUTPUT"
             exit 0

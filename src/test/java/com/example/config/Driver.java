@@ -14,7 +14,7 @@ import org.openqa.selenium.safari.SafariOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -44,8 +44,8 @@ public class Driver {
                             if (useRemote) {
                                 try {
                                     ChromeOptions opts = buildChromeOptions(resolveHeadlessDefault(browser));
-                                    TL_DRIVER.set(new RemoteWebDriver(new URL(remoteUrl), opts));
-                                } catch (MalformedURLException e) {
+                                    TL_DRIVER.set(new RemoteWebDriver(URI.create(remoteUrl).toURL(), opts));
+                                } catch (MalformedURLException | IllegalArgumentException e) {
                                     throw new WebDriverException("Invalid webdriver.remote.url: " + remoteUrl, e);
                                 }
                             } else {
@@ -58,8 +58,8 @@ public class Driver {
                             ff.setAcceptInsecureCerts(true);
                             if (useRemote) {
                                 try {
-                                    TL_DRIVER.set(new RemoteWebDriver(new URL(remoteUrl), ff));
-                                } catch (MalformedURLException e) {
+                                    TL_DRIVER.set(new RemoteWebDriver(URI.create(remoteUrl).toURL(), ff));
+                                } catch (MalformedURLException | IllegalArgumentException e) {
                                     throw new WebDriverException("Invalid webdriver.remote.url: " + remoteUrl, e);
                                 }
                             } else {
@@ -73,8 +73,8 @@ public class Driver {
                             ff.setAcceptInsecureCerts(true);
                             if (useRemote) {
                                 try {
-                                    TL_DRIVER.set(new RemoteWebDriver(new URL(remoteUrl), ff));
-                                } catch (MalformedURLException e) {
+                                    TL_DRIVER.set(new RemoteWebDriver(URI.create(remoteUrl).toURL(), ff));
+                                } catch (MalformedURLException | IllegalArgumentException e) {
                                     throw new WebDriverException("Invalid webdriver.remote.url: " + remoteUrl, e);
                                 }
                             } else {
@@ -102,8 +102,8 @@ public class Driver {
                             // Default to Chrome with CI-safe options
                             if (useRemote) {
                                 try {
-                                    TL_DRIVER.set(new RemoteWebDriver(new URL(remoteUrl), buildChromeOptions(resolveHeadlessDefault("chrome"))));
-                                } catch (MalformedURLException e) {
+                                    TL_DRIVER.set(new RemoteWebDriver(URI.create(remoteUrl).toURL(), buildChromeOptions(resolveHeadlessDefault("chrome"))));
+                                } catch (MalformedURLException | IllegalArgumentException e) {
                                     throw new WebDriverException("Invalid webdriver.remote.url: " + remoteUrl, e);
                                 }
                             } else {

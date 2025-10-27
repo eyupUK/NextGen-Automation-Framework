@@ -65,7 +65,7 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Install dependencies (no tests)
-        run: mvn -B -ntp clean install -DskipTests
+        run: mvn -B -ntp -s .mvn/ci-settings.xml clean install -DskipTests
 
       - name: Set up Java 17 (Gatling)
         uses: actions/setup-java@v4
@@ -75,7 +75,7 @@ jobs:
 
       - name: Recompile tests for JDK 17 (Gatling)
         run: |
-          mvn -B -ntp clean test-compile \
+          mvn -B -ntp -s .mvn/ci-settings.xml clean test-compile \
             -Denforcer.skip=true \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -DskipTests \
@@ -101,7 +101,7 @@ jobs:
         if: env.SIMULATION == 'weather' || env.SIMULATION == 'all'
         run: |
           set +e
-          mvn -B -ntp gatling:test \
+          mvn -B -ntp -s .mvn/ci-settings.xml gatling:test \
             -Denforcer.skip=true \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
@@ -117,7 +117,7 @@ jobs:
         if: env.SIMULATION == 'ecommerce' || env.SIMULATION == 'all'
         run: |
           set +e
-          mvn -B -ntp gatling:test \
+          mvn -B -ntp -s .mvn/ci-settings.xml gatling:test \
             -Denforcer.skip=true \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=${{ env.USERS }}
@@ -193,7 +193,7 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Install dependencies
-        run: mvn -B -ntp clean install -DskipTests
+        run: mvn -B -ntp -s .mvn/ci-settings.xml clean install -DskipTests
 
       - name: Prepare performance results folder
         run: mkdir -p target/performance-results
@@ -202,7 +202,7 @@ jobs:
         id: junit-perf
         run: |
           set +e
-          mvn -B -ntp test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest -Dsla.p95.ms=2000 -Dsla.p99.ms=4000 -Dsla.successRate=95
+          mvn -B -ntp -s .mvn/ci-settings.xml test -DWEATHER_API_KEY="${WEATHER_API_KEY}" -Dtest=WeatherApiPerformanceTest -Dsla.p95.ms=2000 -Dsla.p99.ms=4000 -Dsla.successRate=95
           code=$?
           echo "exitcode=$code" >> "$GITHUB_OUTPUT"
           exit 0

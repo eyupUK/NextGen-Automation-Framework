@@ -44,7 +44,7 @@ jobs:
           cache: 'maven'
 
       - name: Install dependencies (no tests)
-        run: mvn -B -ntp clean install -DskipTests
+        run: mvn -B -ntp -s .mvn/ci-settings.xml clean install -DskipTests
 
       # Switch to Java 17 ONLY for Gatling
       - name: Set up Java 17 (Gatling)
@@ -54,11 +54,11 @@ jobs:
           distribution: 'temurin'
 
       - name: Recompile tests for JDK 17 (Gatling)
-        run: mvn -B -ntp clean test-compile -DskipTests -Dmaven.compiler.testRelease=17 -Denforcer.skip=true
+        run: mvn -B -ntp -s .mvn/ci-settings.xml clean test-compile -DskipTests -Dmaven.compiler.testRelease=17 -Denforcer.skip=true
 
       - name: Run Weather API Load Test
         run: |
-          mvn -B -ntp gatling:test \
+          mvn -B -ntp -s .mvn/ci-settings.xml gatling:test \
             -Denforcer.skip=true \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
@@ -69,7 +69,7 @@ jobs:
 
       - name: Run E-commerce API Load Test
         run: |
-          mvn -B -ntp gatling:test \
+          mvn -B -ntp -s .mvn/ci-settings.xml gatling:test \
             -Denforcer.skip=true \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=15 \

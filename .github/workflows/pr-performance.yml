@@ -40,7 +40,7 @@ jobs:
           cache: 'maven'
 
       - name: Install dependencies (no tests)
-        run: mvn -B -ntp clean install -DskipTests
+        run: mvn -B -ntp -s .mvn/ci-settings.xml clean install -DskipTests
 
       - name: Set up Java 17 (Gatling)
         uses: actions/setup-java@v4
@@ -52,7 +52,8 @@ jobs:
         id: perf-test
         run: |
           echo "Running quick performance check..."
-          mvn -B -ntp gatling:test \
+          mvn -B -ntp -s .mvn/ci-settings.xml gatling:test \
+            -Denforcer.skip=true \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=5 \

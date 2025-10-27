@@ -40,7 +40,7 @@ jobs:
         id: test
         run: |
           set +e
-          mvn -B -Dheadless=true \
+          mvn -B -s .mvn/ci-settings.xml -Dheadless=true \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dtest=SecurityCukesRunner test
           code=$?
@@ -54,7 +54,7 @@ jobs:
           if [ -f target/security-rerun.txt ]; then
             cp target/security-rerun.txt target/rerun.txt
             set +e
-            mvn -B -Dheadless=true \
+            mvn -B -s .mvn/ci-settings.xml -Dheadless=true \
               -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
               -Dtest=FailedTestRunner test
             code=$?

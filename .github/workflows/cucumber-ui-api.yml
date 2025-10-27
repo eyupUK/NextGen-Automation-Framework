@@ -40,7 +40,7 @@ jobs:
         id: test
         run: |
           set +e
-          mvn -B -V -Dheadless=true \
+          mvn -B -V -s .mvn/ci-settings.xml -Dheadless=true \
               -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
               -Dtest=CukesRunner test
           code=$?
@@ -55,7 +55,7 @@ jobs:
           if [ -f target/rerun.txt ]; then
             echo "Found rerun file: target/rerun.txt"
             set +e
-            mvn -B -Dheadless=true \
+            mvn -B -s .mvn/ci-settings.xml -Dheadless=true \
                 -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
                 -Dtest=FailedTestRunner test
             code=$?
