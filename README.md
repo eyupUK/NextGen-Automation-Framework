@@ -20,7 +20,7 @@ git clone <your-repo-url>
 cd <your-repo-directory>
 
 # 2) Create your local config from the template
-cp configuration.properties.template configuration.properties
+cp configuration-test.properties.template configuration-test.properties
 
 # 3) Run tests (default runner excludes @accessibility and @security)
 mvn clean test
@@ -146,7 +146,7 @@ This project includes a Cucumber-based security suite for both the public websit
 ### Setup
 
 ```bash
-cp configuration.properties.template configuration.properties
+cp configuration-test.properties.template configuration-test.properties
 export WEATHER_API_KEY=your_api_key_here
 ```
 

@@ -37,7 +37,7 @@ mvn_args=()
 if [[ -n "$WEATHER_API_KEY" ]]; then
   mvn_args+=( -DWEATHER_API_KEY="$WEATHER_API_KEY" -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation )
 else
-#  echo -e "${YELLOW}ℹ️ WEATHER_API_KEY env var not set. Tests will fallback to configuration.properties if configured.${NC}"
+#  echo -e "${YELLOW}ℹ️ WEATHER_API_KEY env var not set. Tests will fallback to configuration-test.properties if configured.${NC}"
   print_message "$YELLOW" "ℹ️ WEATHER_API_KEY env var not set. Tests will fallback to configuration.properties if configured."
 fi
 

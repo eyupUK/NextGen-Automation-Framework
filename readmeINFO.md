@@ -49,7 +49,7 @@ This repository provides a unified automation framework for UI, API, accessibili
    ```
 2) Create your local config
    ```bash
-   cp configuration.properties.template configuration.properties
+   cp configuration-test.properties.template configuration-test.properties
    ```
 3) (Optional) Install Allure CLI if you want local Allure HTML reports
 

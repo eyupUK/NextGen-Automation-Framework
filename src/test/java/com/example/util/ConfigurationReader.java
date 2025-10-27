@@ -4,7 +4,7 @@ import java.io.FileInputStream;
 import java.util.Properties;
 
 /**
- * reads the properties file configuration.properties
+ * reads the properties file configuration-test.properties
  * Supports environment variables for sensitive data (e.g., API keys)
  */
 public class ConfigurationReader {
@@ -13,7 +13,12 @@ public class ConfigurationReader {
 
     static {
         try {
-            String path = "configuration.properties";
+            String env = System.getProperty("ENV") != null ? System.getProperty("ENV") : "test";
+            String path = switch (env) {
+                case "staging" -> "configuration-staging.properties";
+                case "dev" -> "configuration-dev.properties";
+                default -> "configuration-test.properties";
+            };
             FileInputStream input = new FileInputStream(path);
             properties = new Properties();
             properties.load(input);

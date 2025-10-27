@@ -8,7 +8,7 @@ import com.example.util.ConfigurationReader;
  */
 public class PerformanceConfig {
 
-    // Load from configuration.properties
+    // Load from configuration-test.properties
     public static final String WEATHER_API_BASE_URL = ConfigurationReader.get("weather_api_base_url");
     public static final String FAKESTORE_API_BASE_URL = ConfigurationReader.get("fakes_tore_api_base_url");
 

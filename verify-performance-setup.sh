@@ -67,7 +67,7 @@ done
 # Check 4: Configuration
 echo ""
 echo -n "Checking configuration.properties... "
-if grep -q "perf.users" configuration.properties 2>/dev/null; then
+if grep -q "perf.users" configuration-test.properties 2>/dev/null; then
     echo -e "${GREEN}✓${NC}"
 else
     echo -e "${YELLOW}⚠ Performance config not found${NC}"

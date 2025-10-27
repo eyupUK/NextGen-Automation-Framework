@@ -15,7 +15,7 @@ How to run locally (quick)
 2. Create local configuration from the template:
 
 ```bash
-cp configuration.properties.template configuration.properties
+cp configuration-test.properties.template configuration-test.properties
 ```
 
 3. Run only the demo scenario locally (headless Chrome):

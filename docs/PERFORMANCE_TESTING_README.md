@@ -90,7 +90,7 @@ src/test/java/com/example/performance/
 # Customize via command line
 ./run-performance-tests.sh -u 50 -r 30 -d 120 weather-api
 
-# Or via configuration.properties
+# Or via configuration-test.properties
 perf.users=50
 perf.rampup=30
 perf.duration=120

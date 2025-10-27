@@ -63,7 +63,7 @@ mvn test -DWEATHER_API_KEY=`your api key here`
 ### Option 3: Create Local Configuration (Not Recommended)
 ```bash
 # Create a local file (already in .gitignore)
-cp configuration.properties.template configuration.properties.local
+cp configuration-test.properties.template configuration-test.properties.local
 # Add WEATHER_API_KEY=your_key_here to the file
 ```
 

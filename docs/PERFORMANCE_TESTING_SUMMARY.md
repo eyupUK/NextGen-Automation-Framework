@@ -195,7 +195,7 @@ mvn exec:java -Dexec.mainClass="com.example.performance.examples.PerformanceTest
 
 ### 2. Configurable Parameters
 ```properties
-# Via configuration.properties
+# Via configuration-test.properties
 perf.users=10              # Number of concurrent users
 perf.rampup=10            # Ramp-up time in seconds
 perf.duration=60          # Test duration in seconds

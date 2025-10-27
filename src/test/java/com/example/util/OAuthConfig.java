@@ -20,7 +20,7 @@ public final class OAuthConfig {
         if (sys != null && !sys.isBlank()) {
             return sys;
         }
-        // 3) Finally fall back to configuration.properties via ConfigurationReader
+        // 3) Finally fall back to configuration-test.properties via ConfigurationReader
         return ConfigurationReader.get(dottedKey);
     }
 

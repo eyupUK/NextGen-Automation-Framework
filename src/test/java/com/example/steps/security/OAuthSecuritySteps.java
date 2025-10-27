@@ -26,7 +26,7 @@ public class OAuthSecuritySteps {
 
     @Given("OAuth 2.0 client credentials are configured")
     public void oauth_client_credentials_are_configured() {
-        // Prefer environment variables (OAUTH_*) and fall back to configuration.properties
+        // Prefer environment variables (OAUTH_*) and fall back to configuration-test.properties
         tokenUrl = OAuthConfig.tokenUrl();
         clientId = OAuthConfig.clientId();
         clientSecret = OAuthConfig.clientSecret();
