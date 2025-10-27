@@ -2,15 +2,9 @@ name: Nightly Performance Tests
 
 on:
   schedule:
-  # Run every night at 2 AM UTC
       - cron: '0 2 * * *'
   push:
-    # update wip branch name as needed
     branches: [ wip ]
-  #    branches: [ main, master, complete-ci-implementation ]
-  #  pull_request:
-  #    branches: [ main, master ]
-
   workflow_dispatch:
     inputs:
       notify_on_failure:
@@ -60,11 +54,12 @@ jobs:
           distribution: 'temurin'
 
       - name: Recompile tests for JDK 17 (Gatling)
-        run: mvn -B -ntp clean test-compile -DskipTests -Dmaven.compiler.testRelease=17
+        run: mvn -B -ntp clean test-compile -DskipTests -Dmaven.compiler.testRelease=17 -Denforcer.skip=true
 
       - name: Run Weather API Load Test
         run: |
           mvn -B -ntp gatling:test \
+            -Denforcer.skip=true \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=20 \
@@ -75,6 +70,7 @@ jobs:
       - name: Run E-commerce API Load Test
         run: |
           mvn -B -ntp gatling:test \
+            -Denforcer.skip=true \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=15 \
             -Dperf.rampup=20

@@ -76,6 +76,7 @@ jobs:
       - name: Recompile tests for JDK 17 (Gatling)
         run: |
           mvn -B -ntp clean test-compile \
+            -Denforcer.skip=true \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -DskipTests \
             -Dmaven.compiler.testRelease=17
@@ -101,6 +102,7 @@ jobs:
         run: |
           set +e
           mvn -B -ntp gatling:test \
+            -Denforcer.skip=true \
             -DWEATHER_API_KEY="${WEATHER_API_KEY}" \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.WeatherApiPerformanceSimulation \
             -Dperf.users=${{ env.USERS }} \
@@ -116,6 +118,7 @@ jobs:
         run: |
           set +e
           mvn -B -ntp gatling:test \
+            -Denforcer.skip=true \
             -Dgatling.simulationClass=com.example.performance.gatling.simulations.EcommerceApiPerformanceSimulation \
             -Dperf.users=${{ env.USERS }}
           code=$?

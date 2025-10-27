@@ -1,5 +1,9 @@
 # NextGen Automation Framework: API • Contract • UI • Security • Accessibility • Performance Testing
 
+[![Security Gate](https://img.shields.io/badge/security-gate-green)](#security-gate-sast--dependencies)
+[![Sonar Quality Gate](https://img.shields.io/badge/Sonar-Quality%20Gate-blue)](#sonar-quality-gate)
+[![Snyk](https://img.shields.io/badge/Snyk-OSS%20Scan-purple)](#snyk-open-source-scan)
+
 A unified test automation framework built with Java 21, Maven, JUnit, Cucumber, Selenium, Rest Assured, axe-core/selenium, and Gatling. It supports BDD-style scenarios for UI and API testing, security header checks, accessibility scanning, and performance load tests.
 
 - Detailed framework guide: see [readmeINFO.md](readmeINFO.md)
@@ -106,24 +110,48 @@ A fully deterministic demo is available for stakeholders using in-process mock s
 Run security checks before tests to keep the codebase clean and secure from the start.
 
 - SAST: SpotBugs + FindSecBugs (High priority)
-- Dependency: OWASP Dependency-Check (fail on CVSS v3 ≥ 9.0)
-- CI runs `-Psecurity-gate` first; artifacts are uploaded as `security-reports`.
+- Dependency: OWASP Dependency-Check (fail on CVSS v3 ≥ 8.0)
+- License/SBOM: THIRD-PARTY inventory and CycloneDX BOM (target/bom.json)
 
 Local usage:
+
 ```bash
 ./mvnw -Psecurity-gate -DskipTests=true verify
+# With fresh NVD DB
+./mvnw -Psecurity-gate -Ddependency-check.autoUpdate=true -DskipTests=true verify
 ```
 
-### Rerun only failed scenarios
+- Suppressions: edit `config/dependency-check-suppressions.xml` to whitelist known false positives (with rationale and expiry).
+- CI: see `.github/workflows/ci.yml` (first job).
 
+### Sonar Quality Gate
+
+CI runs a Sonar analysis and waits for the Quality Gate. Configure your secrets:
+- `SONAR_HOST_URL` (e.g., `https://sonarcloud.io`)
+- `SONAR_TOKEN`
+- Optional: `SONAR_PROJECT_KEY`, `SONAR_ORG` (override the defaults in `sonar-project.properties`).
+
+Local analysis (when using a local SonarQube):
 ```bash
-# After an initial run
-./mvnw -Prerun-failed test
+./mvnw -DskipTests=true org.sonarsource.scanner.maven:sonar-maven-plugin:3.10.0.2594:sonar \
+  -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
 ```
-This profile prepares `target/rerun.txt` and runs only `FailedTestRunner`. Alternatively:
+
+### Snyk Open Source Scan
+
+CI runs `snyk test` to fail on policy violations, and `snyk monitor` to keep an inventory snapshot in Snyk.
+
+- Set repo secret: `SNYK_TOKEN`
+- Artifacts: SARIF uploaded to code scanning alerts in the repository (Security tab)
+
+Manual run (requires Snyk CLI):
 ```bash
-mvn -Dtest=FailedTestRunner test
+snyk auth $SNYK_TOKEN
+snyk test --maven --severity-threshold=high --fail-on=all
+snyk monitor --maven --project-name="$(basename "$PWD")"
 ```
+
+...existing code...
 
 ## CI (GitHub Actions)
 

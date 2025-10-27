@@ -1,7 +1,6 @@
 name: CI
 
 on:
-  # update wip branch name as needed
   push:
     branches: [ wip ]
   pull_request:
@@ -13,6 +12,7 @@ permissions:
   id-token: write
   pull-requests: write
   issues: write
+  security-events: write
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -50,9 +50,86 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  sonar:
+    name: Sonar Quality Gate
+    runs-on: ubuntu-latest
+    needs: [security-gate]
+    timeout-minutes: 20
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      SONAR_ORG: ${{ secrets.SONAR_ORG }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Cache Sonar packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXTRA_ARGS=""
+          if [ -n "$SONAR_PROJECT_KEY" ]; then EXTRA_ARGS="$EXTRA_ARGS -Dsonar.projectKey=$SONAR_PROJECT_KEY"; fi
+          if [ -n "$SONAR_ORG" ]; then EXTRA_ARGS="$EXTRA_ARGS -Dsonar.organization=$SONAR_ORG"; fi
+          ./mvnw -B -ntp -DskipTests=true \
+            org.sonarsource.scanner.maven:sonar-maven-plugin:3.10.0.2594:sonar \
+            -Dsonar.qualitygate.wait=true $EXTRA_ARGS
+
+  snyk-oss:
+    name: Snyk Open Source Scan
+    runs-on: ubuntu-latest
+    needs: [security-gate]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node (Snyk CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Snyk
+        run: npm install -g snyk
+      - name: Snyk Auth
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk auth $SNYK_TOKEN
+      - name: Snyk test (fail on issues)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk test --maven --severity-threshold=high --fail-on=all
+      - name: Snyk monitor (record snapshot)
+        if: always()
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk monitor --maven --project-name="${{ github.repository }}" || true
+      - name: Generate Snyk SARIF
+        if: always()
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --maven --severity-threshold=low --sarif-file-output=snyk.sarif || true
+      - name: Upload SARIF to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk.sarif
+
   changes:
     name: Detect changes
     runs-on: ubuntu-latest
+    needs: [sonar, snyk-oss]
     outputs:
       a11y_changed: ${{ steps.filter.outputs.accessibility }}
     steps:

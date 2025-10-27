@@ -483,7 +483,7 @@
         <profile>
             <id>security-gate</id>
             <properties>
-                <security.failOnCvss>9.0</security.failOnCvss>
+                <security.failOnCvss>8.0</security.failOnCvss>
             </properties>
             <build>
                 <plugins>
@@ -493,7 +493,10 @@
                         <version>${dependency-check-maven.version}</version>
                         <configuration>
                             <autoUpdate>false</autoUpdate>
-                            <failBuildOnCVSS>9.0</failBuildOnCVSS>
+                            <failBuildOnCVSS>8.0</failBuildOnCVSS>
+                            <suppressionFiles>
+                                <suppressionFile>${project.basedir}/config/dependency-check-suppressions.xml</suppressionFile>
+                            </suppressionFiles>
                         </configuration>
                         <executions>
                             <execution>

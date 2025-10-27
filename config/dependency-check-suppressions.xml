@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- Example suppression: adjust/remove after reviewing reports -->
+    <!--
+    <suppress>
+        <notes>Example suppression for a false positive in transitive netty version locked by vendor</notes>
+        <cve>CVE-2023-44487</cve>
+        <gav regex="true">^io\.netty:netty-codec-http2:.*$</gav>
+        <until>2026-12-31Z</until>
+    </suppress>
+    -->
+</suppressions>
+
