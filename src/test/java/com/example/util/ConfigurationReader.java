@@ -1,32 +1,67 @@
 package com.example.util;
 
 import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Properties;
 
 /**
- * reads the properties file configuration-test.properties
- * Supports environment variables for sensitive data (e.g., API keys)
+ * Reads configuration from environment-specific properties with sensible fallbacks.
+ * Order of precedence for values returned by get(key):
+ *  1) Environment variables
+ *  2) System properties (-Dkey=value)
+ *  3) Loaded properties file (environment-specific if present, otherwise default)
  */
 public class ConfigurationReader {
 
     private static Properties properties;
 
     static {
-        try {
-            String env = System.getProperty("ENV") != null ? System.getProperty("ENV") : "test";
-            String path = switch (env) {
-                case "staging" -> "configuration-staging.properties";
-                case "dev" -> "configuration-dev.properties";
-                default -> "configuration-test.properties";
-            };
-            FileInputStream input = new FileInputStream(path);
-            properties = new Properties();
-            properties.load(input);
+        properties = new Properties();
+        String env = resolveEnv();
+        String fileName = switch (env) {
+            case "staging" -> "configuration-staging.properties";
+            case "dev" -> "configuration-dev.properties";
+            default -> "configuration-test.properties";
+        };
 
-            input.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        // Prefer env-specific file if it exists; otherwise fall back to configuration.properties
+        Path envPath = Path.of(fileName);
+        Path fallbackPath = Path.of("configuration.properties");
+
+        String chosen;
+        if (Files.exists(envPath)) {
+            chosen = envPath.toString();
+        } else if (Files.exists(fallbackPath)) {
+            chosen = fallbackPath.toString();
+        } else {
+            chosen = null;
         }
+
+        System.out.println("[Configuration] ENV=" + env + (chosen != null ? ", file=" + chosen : ", file=<none>"));
+
+        if (chosen != null) {
+            try (InputStream in = new FileInputStream(chosen)) {
+                properties.load(in);
+            } catch (Exception e) {
+                System.out.println("[Configuration] Failed to load properties from " + chosen + ": " + e.getMessage());
+            }
+        } else {
+            System.out.println("[Configuration] No properties file found; relying on env vars and -D system properties.");
+        }
+    }
+
+    private static String resolveEnv() {
+        // System properties take precedence for selecting the file
+        String env = System.getProperty("ENV");
+        if (env == null || env.isBlank()) env = System.getProperty("env");
+        // Then environment variables (support both ENV and TEST_ENV to avoid shell conflicts)
+        if (env == null || env.isBlank()) env = System.getenv("ENV");
+        if (env == null || env.isBlank()) env = System.getenv("TEST_ENV");
+        if (env == null || env.isBlank()) env = "test";
+        return env.toLowerCase(Locale.ROOT).trim();
     }
 
     public static String get(String keyName) {
