@@ -19,6 +19,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  security-gate:
+    name: Security Gate (SAST + Dependency)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Run SpotBugs + FindSecBugs and OWASP Dependency-Check
+        run: |
+          ./mvnw -B -ntp -DskipTests=true -Psecurity-gate \
+            -Ddependency-check.autoUpdate=true \
+            verify
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            target/spotbugs/*.xml
+            target/spotbugs/*.html
+            target/dependency-check-report/**
+            target/bom.json
+          if-no-files-found: ignore
+          retention-days: 14
+
   changes:
     name: Detect changes
     runs-on: ubuntu-latest
@@ -39,7 +70,7 @@ jobs:
   plan-a11y:
     name: Plan Accessibility matrix
     runs-on: ubuntu-latest
-    needs: [changes]
+    needs: [changes, security-gate]
     outputs:
       run: ${{ steps.plan.outputs.run }}
       browsers: ${{ steps.plan.outputs.browsers }}
@@ -63,6 +94,7 @@ jobs:
     name: API Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    needs: [security-gate]
 
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
@@ -168,6 +200,7 @@ jobs:
     name: UI Tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    needs: [security-gate]
 
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
@@ -321,7 +354,7 @@ jobs:
             -Dcucumber.features=src/test/resources/features/accessibility \
             -Dbrowser=${{ matrix.browser }}
           code=$?
-          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          echo "exitcode=$code" >> $GITHUB_OUTPUT
           exit 0
 
       - name: Upload Accessibility Reports
@@ -510,11 +543,11 @@ jobs:
 
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- API Test Reports: \`api-test-reports\`" >> $GITHUB_STEP_SUMMARY
-          echo "- API Allure Results: \`api-allure-results\`" >> $GITHUB_STEP_SUMMARY
-          echo "- UI Test Reports: \`ui-test-reports\`" >> $GITHUB_STEP_SUMMARY
-          echo "- UI Allure Results: \`ui-allure-results\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Accessibility Reports: \`accessibility-reports\`" >> $GITHUB_STEP_SUMMARY
+          echo "- API Test Reports: `api-test-reports`" >> $GITHUB_STEP_SUMMARY
+          echo "- API Allure Results: `api-allure-results`" >> $GITHUB_STEP_SUMMARY
+          echo "- UI Test Reports: `ui-test-reports`" >> $GITHUB_STEP_SUMMARY
+          echo "- UI Allure Results: `ui-allure-results`" >> $GITHUB_STEP_SUMMARY
+          echo "- Accessibility Reports: `accessibility-reports`" >> $GITHUB_STEP_SUMMARY
 
           # Link to Pages if this is a main push; otherwise inform where to find report
           OWNER=${REPO%%/*}

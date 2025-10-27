@@ -23,6 +23,13 @@
         <axe.version>4.10.2</axe.version>
         <!-- Allow CI tag selection; empty by default -->
         <cucumber.filter.tags></cucumber.filter.tags>
+        <!-- Security gate plugin versions -->
+        <dependency-check-maven.version>10.0.4</dependency-check-maven.version>
+        <spotbugs-maven-plugin.version>4.8.6.5</spotbugs-maven-plugin.version>
+        <findsecbugs.version>1.12.0</findsecbugs.version>
+        <!-- License and SBOM -->
+        <license-maven-plugin.version>2.0.0</license-maven-plugin.version>
+        <cyclonedx-maven-plugin.version>2.7.9</cyclonedx-maven-plugin.version>
     </properties>
     <build>
         <plugins>
@@ -51,8 +58,30 @@
                 </configuration>
             </plugin>
 
-            <!-- Enforce toolchain and basic hygiene -->
-            <!-- Intentionally disabled global toolchain enforcement; CI-only rules live under the ci-enforcer profile. -->
+            <!-- Enforce Java toolchain and optional snapshot bans -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <fail>true</fail>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[21,22)</version>
+                                    <message>Java 21 is required to build and run this project.</message>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -123,6 +152,58 @@
                 <configuration>
                     <release>${maven.compiler.release}</release>
                 </configuration>
+            </plugin>
+
+            <!-- Security Gate Plugins (baseline configuration; executions bound via profile "security-gate") -->
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>${dependency-check-maven.version}</version>
+                <configuration>
+                    <autoUpdate>false</autoUpdate>
+                    <!-- Fail build on Critical CVEs (CVSS v3 >= 9.0) -->
+                    <failBuildOnCVSS>9.0</failBuildOnCVSS>
+                    <!-- Include test scoped dependencies as this is a test-focused project -->
+                    <skipTestScope>false</skipTestScope>
+                    <formats>HTML,JSON</formats>
+                    <outputDirectory>${project.build.directory}/dependency-check-report</outputDirectory>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs-maven-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.h3xstream.findsecbugs</groupId>
+                        <artifactId>findsecbugs-plugin</artifactId>
+                        <version>${findsecbugs.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <effort>Max</effort>
+                    <!-- Only report high priority findings; fail if any -->
+                    <threshold>High</threshold>
+                    <failOnError>true</failOnError>
+                    <includeTests>true</includeTests>
+                    <xmlOutput>true</xmlOutput>
+                    <outputDirectory>${project.build.directory}/spotbugs</outputDirectory>
+                    <!-- Focus on security issues -->
+                    <includeFilterFile>${project.basedir}/config/spotbugs-include.xml</includeFilterFile>
+                </configuration>
+            </plugin>
+
+            <!-- License and SBOM plugins (executions configured in profile) -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>${license-maven-plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <version>${cyclonedx-maven-plugin.version}</version>
             </plugin>
         </plugins>
     </build>
@@ -376,6 +457,7 @@
                 <headless>true</headless>
                 <browser>chrome</browser>
                 <demo.mock>true</demo.mock>
+                <demo.mock.api>true</demo.mock.api>
             </properties>
             <build>
                 <plugins>
@@ -389,8 +471,102 @@
                                 <headless>${headless}</headless>
                                 <browser>${browser}</browser>
                                 <demo.mock>${demo.mock}</demo.mock>
+                                <demo.mock.api>${demo.mock.api}</demo.mock.api>
                             </systemPropertyVariables>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Security Gate: run static analysis, dependency vulnerability and license checks before tests in CI/local -->
+        <profile>
+            <id>security-gate</id>
+            <properties>
+                <security.failOnCvss>9.0</security.failOnCvss>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>${dependency-check-maven.version}</version>
+                        <configuration>
+                            <autoUpdate>false</autoUpdate>
+                            <failBuildOnCVSS>9.0</failBuildOnCVSS>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>dc-validate</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <version>${spotbugs-maven-plugin.version}</version>
+                        <configuration>
+                            <includeTests>true</includeTests>
+                            <threshold>High</threshold>
+                            <failOnError>true</failOnError>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>spotbugs-validate</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>spotbugs</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>license-maven-plugin</artifactId>
+                        <version>${license-maven-plugin.version}</version>
+                        <configuration>
+                            <verbose>true</verbose>
+                            <addThirdParty>true</addThirdParty>
+                            <useMissingFile>true</useMissingFile>
+                            <failOnMissing>true</failOnMissing>
+                            <thirdPartyFilename>THIRD-PARTY.txt</thirdPartyFilename>
+                            <thirdPartyLicenseFilename>THIRD-PARTY.json</thirdPartyLicenseFilename>
+                            <outputDirectory>${project.build.directory}/generated-sources/license</outputDirectory>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>license-third-party</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>aggregate-add-third-party</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.cyclonedx</groupId>
+                        <artifactId>cyclonedx-maven-plugin</artifactId>
+                        <version>${cyclonedx-maven-plugin.version}</version>
+                        <configuration>
+                            <schemaVersion>1.5</schemaVersion>
+                            <includeBomSerialNumber>true</includeBomSerialNumber>
+                            <outputFormat>json</outputFormat>
+                            <outputName>bom</outputName>
+                            <skipNotReachableLicenses>false</skipNotReachableLicenses>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>make-sbom</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>makeAggregateBom</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -434,6 +610,43 @@
                                 <exclude>**/*AllCukesRunner.java</exclude>
                             </excludes>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>ci-strict</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>3.4.1</version>
+                        <executions>
+                            <execution>
+                                <id>enforce-maven-and-no-snapshots</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <fail>true</fail>
+                                    <rules>
+                                        <requireMavenVersion>
+                                            <version>[3.9,)</version>
+                                            <message>Maven 3.9+ is required on CI.</message>
+                                        </requireMavenVersion>
+                                        <requireReleaseDeps>
+                                            <message>Snapshot dependencies are banned on CI.</message>
+                                        </requireReleaseDeps>
+                                        <requireReleaseVersion>
+                                            <message>Project version must not be a SNAPSHOT on CI.</message>
+                                        </requireReleaseVersion>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>

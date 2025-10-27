@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Only include high-priority security related bug patterns -->
+    <Match>
+        <Bug code="SECURITY,SQL,PATH,WEAK_HASH,CRLF_INJECTION,COMMAND,SPRING,SERVLET"/>
+        <Priority value="1"/>
+    </Match>
+</FindBugsFilter>
+

@@ -101,6 +101,19 @@ A fully deterministic demo is available for stakeholders using in-process mock s
   ./mvnw -Pdemo -Ddemo.mock.api=true -Dcucumber.filter.tags="@api and @current" test
   ```
 
+### Security Gate (SAST + Dependencies)
+
+Run security checks before tests to keep the codebase clean and secure from the start.
+
+- SAST: SpotBugs + FindSecBugs (High priority)
+- Dependency: OWASP Dependency-Check (fail on CVSS v3 ≥ 9.0)
+- CI runs `-Psecurity-gate` first; artifacts are uploaded as `security-reports`.
+
+Local usage:
+```bash
+./mvnw -Psecurity-gate -DskipTests=true verify
+```
+
 ### Rerun only failed scenarios
 
 ```bash
@@ -116,6 +129,7 @@ mvn -Dtest=FailedTestRunner test
 
 This repo includes production-ready workflows under `.github/workflows/`:
 
+- Security Gate: Embedded in `ci.yml` as the first job
 - Cucumber test suites
   - `cucumber-ui-api.yml` (UI + API)
   - `cucumber-accessibility.yml`

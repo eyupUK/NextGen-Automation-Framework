@@ -5,7 +5,7 @@ This repo now includes a fully deterministic end-to-end demo for stakeholders th
 What’s included:
 - UI demo of the checkout flow on SauceDemo, driven by a tiny in-process mock server.
 - API demo of Weather API scenarios (current, forecast, errors), backed by a local mock server that returns schema-compliant payloads.
-- CI hygiene via Maven Enforcer in a CI-only profile that validates Maven and JDK versions and bans SNAPSHOT deps in CI.
+- Security gate before tests: SpotBugs + FindSecBugs and OWASP Dependency-Check run on CI to block critical issues early.
 - Stable reruns: a dedicated `rerun-failed` profile that prepares `target/rerun.txt` and runs only failed scenarios safely.
 
 ## Quick start
@@ -43,24 +43,21 @@ To rerun only failed scenarios after an initial run:
 
 The profile will `touch target/rerun.txt` to avoid parser errors and execute `FailedTestRunner` only.
 
-## CI hygiene (Enforcer)
+## Security Gate (CI)
 
-On CI, enable strict rules with:
+A security gate runs early in CI to fail fast on critical risks.
 
+- Static analysis: SpotBugs with FindSecBugs (High priority, include tests)
+- Dependency scanning: OWASP Dependency-Check (fail on CVSS v3 >= 9.0)
+- Reports are uploaded as the `security-reports` artifact.
+
+Local runs (optional):
 ```bash
-./mvnw -B -V -Dci.enforce=true verify
+./mvnw -Psecurity-gate -DskipTests=true verify
 ```
-
-Rules enforced on CI:
-- Maven >= 3.9
-- JDK >= 21 (matches compiler.release)
-- No SNAPSHOT dependencies
-
-Locally, these don’t activate unless you pass `-Dci.enforce=true`.
 
 ## Notes
 
 - Chrome CDP warnings for new browser versions are harmless; if desired, add matching `selenium-devtools-v<ver>` dependency.
 - Secrets (e.g., `WEATHER_API_KEY`) aren’t required when using the mock; for real provider tests, set an env var or `-DWEATHER_API_KEY`. Set `-Dweather_api_base_url` to point to the real API.
 - Demo artifacts (screenshots, Allure results) are written under `target/` and can be uploaded in CI.
-

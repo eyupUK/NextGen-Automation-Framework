@@ -23,13 +23,13 @@ jobs:
       - name: Show Java version
         run: java -version
 
-      - name: Run demo E2E scenario (headless Chrome)
+      - name: Run demo E2E scenario (headless Chrome, deterministic)
         env:
           CI: true
         run: |
           # Ensure configuration file exists (uses template defaults in CI)
           if [ ! -f configuration.properties ]; then cp configuration.properties.template configuration.properties; fi
-          ./mvnw -B -V -Dci.enforce=true -Dheadless=true -Dbrowser=chrome -Dcucumber.filter.tags="@demo" test
+          ./mvnw -B -V -Pdemo -Dheadless=true -Dbrowser=chrome -Ddemo.mock=true -Dcucumber.filter.tags="@demo" test
 
       - name: Archive reports
         if: always()
