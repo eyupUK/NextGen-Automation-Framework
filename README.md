@@ -8,7 +8,7 @@ A unified test automation framework built with Java 21, Maven, JUnit, Cucumber, 
 ## Prerequisites
 
 - Java 21 (JDK). Ensure JAVA_HOME points to your JDK 21 installation
-- Maven 3.9+
+- Maven 3.9+ (recommended)
 - IntelliJ IDEA (recommended)
 - Optional: Allure CLI for viewing local Allure reports
 
@@ -20,9 +20,9 @@ git clone <your-repo-url>
 cd <your-repo-directory>
 
 # 2) Create your local config from the template
-cp configuration-test.properties.template configuration-test.properties
+cp configuration.properties.template configuration.properties
 
-# 3) Run tests (default runner excludes @accessibility and @security)
+# 3) Run tests (default runner)
 mvn clean test
 ```
 
@@ -33,14 +33,32 @@ mvn clean test
   - Example: `mvn clean test -Dbrowser=chrome-headless`
   - Headless toggle: `-Dheadless=true` (defaults to headless on CI, headed locally)
 - SauceDemo URL and sample creds are defined in the config template
-- Weather API base URL is configured in the template; provide your key via env var:
+- Weather API base URL is configurable; provide your key via env var when hitting the real API:
   ```bash
   export WEATHER_API_KEY=your_api_key
   ```
+- Environment selection (for env-specific property files):
+  - The loader looks for, in order: `configuration-<env>.properties` (if present), else `configuration.properties`.
+  - Pick environment via system property or environment variable:
+    ```bash
+    # system property (preferred)
+    mvn clean test -DENV=staging
+
+    # alias
+    mvn clean test -Denv=dev
+
+    # environment variable
+    export ENV=staging
+    mvn clean test
+
+    # alternate var if ENV conflicts
+    export TEST_ENV=staging
+    mvn clean test
+    ```
 
 ## Running Tests
 
-- Default test run (UI/API; excludes accessibility and security via runner tags)
+- Default test run (UI/API)
   ```bash
   mvn clean test
   ```
@@ -60,13 +78,39 @@ mvn clean test
 
 ### Runners
 
-- UI/API default: `com.example.runners.CukesRunner`
+- Unified cucumber runner: `com.example.runners.AllCukesRunner` (used by Maven Surefire by default)
+- UI/API (E2E) default: `com.example.runners.CukesRunner`
 - Accessibility only: `com.example.runners.AccessibilityCukesRunner` (tags: `@accessibility`)
 - Security suite: `com.example.runners.SecurityCukesRunner` (tags: `@security`)
 - Performance (JUnit suite): `com.example.runners.PerformanceJUnitRunner`
 - Performance (Cucumber): `com.example.runners.PerformanceCukesRunner` (default tags: `@performance`)
 
-You can run these directly from your IDE or leave discovery to Maven Surefire (already configured to include `**/*CukesRunner.java` and `FailedTestRunner`).
+You can run these directly from your IDE or leave discovery to Maven Surefire. By default, Surefire includes only `**/*AllCukesRunner.java` and excludes `FailedTestRunner`. To rerun failed scenarios use the profile below or run the rerun runner explicitly.
+
+### Deterministic demo runs
+
+A fully deterministic demo is available for stakeholders using in-process mock servers.
+
+- Quick start and details: see [docs/DEMO_README.md](docs/DEMO_README.md)
+- UI demo (@demo tag, mock UI server):
+  ```bash
+  ./mvnw -Pdemo -Dheadless=true -Dbrowser=chrome -Ddemo.mock=true -Dcucumber.filter.tags="@demo" test
+  ```
+- API demo (mock Weather API):
+  ```bash
+  ./mvnw -Pdemo -Ddemo.mock.api=true -Dcucumber.filter.tags="@api and @current" test
+  ```
+
+### Rerun only failed scenarios
+
+```bash
+# After an initial run
+./mvnw -Prerun-failed test
+```
+This profile prepares `target/rerun.txt` and runs only `FailedTestRunner`. Alternatively:
+```bash
+mvn -Dtest=FailedTestRunner test
+```
 
 ## CI (GitHub Actions)
 
@@ -82,39 +126,19 @@ This repo includes production-ready workflows under `.github/workflows/`:
   - Reliability: failed scenarios are rerun via `FailedTestRunner` when a rerun list exists
   - Artifacts: Cucumber HTML/JSON, Allure results, rerun files, and any failed HTML pages/screenshots
   - Summary: each job writes a short “Cucumber Summary” to `$GITHUB_STEP_SUMMARY`
-  - Hardened uploads: each Cucumber workflow now prints a debug listing of `target/` and common report folders and uses broadened artifact globs (e.g., `target/cucumber*.{json,html}`, `target/allure-results/**`, `target/cucumber-html-reports/**`, `target/surefire-reports/**`) to reduce “No files found” surprises.
-
-### Failure handling and reruns (no more false greens)
-
-- Each test step records the Maven exit code instead of relying on the step "conclusion" with `continue-on-error`.
-- If the initial run fails and a `target/rerun*.txt` exists, `FailedTestRunner` is executed automatically.
-- The job fails with exit code 1 when the initial run fails and the rerun also fails (or when no rerun file exists).
-- The summary reflects the real outcome: success (initial), success (after rerun), or failure.
 
 - Performance and PR checks
-  - `performance-tests.yml`: flexible Gatling/JUnit runs (manual or on push), artifacts and summaries
-    - Hardened with debug listing of `target/gatling-results/`, `target/allure-results/`, and `target/surefire-reports/` before uploads.
-  - `nightly-performance.yml`: nightly batch with issue creation on failure and trend retention
-    - Also includes debug listing to diagnose missing artifacts quickly.
-  - `pr-performance.yml`: quick 30s check on PRs with a PR comment and artifacts
-    - Includes a debug listing of `target/gatling-results/` and `performance-output.log`.
-  - `stress-test.yml`: manual stress/spike tests, larger retention for reports and trends
-    - Includes debug listings for Gatling, Surefire, and performance result folders.
-
-- Security tests (matrix)
-  - `security-tests.yml` runs both web and API security legs via a matrix (target: `web`, `api`).
-  - fail-fast is explicitly set to `false` so the API leg will still run and produce artifacts even if the web leg fails.
+  - `performance-tests.yml`, `nightly-performance.yml`, `pr-performance.yml`, `stress-test.yml`
 
 Notes
-- The legacy consolidated workflow `test-suites.yml` has been removed in favor of split, focused workflows.
-- Most workflows run with least-privilege permissions and concurrency to prevent overlapping runs.
+- Workflows run with least-privilege permissions and concurrency to prevent overlapping runs.
 
 ### Quick Links to GitHub Actions
 
 Replace `OWNER/REPO` with your GitHub org/user and repository:
 
 - All workflow runs: `https://github.com/OWNER/REPO/actions`
-- UI + API: `https://github.com/OWNER/REPO/actions/workflows/cucumber-ui-api.yml`
+- UI + API (E2E): `https://github.com/OWNER/REPO/actions/workflows/cucumber-ui-api.yml`
 - Accessibility: `https://github.com/OWNER/REPO/actions/workflows/cucumber-accessibility.yml`
 - Security: `https://github.com/OWNER/REPO/actions/workflows/cucumber-security.yml`
 - Contract: `https://github.com/OWNER/REPO/actions/workflows/cucumber-contract.yml`
@@ -146,7 +170,7 @@ This project includes a Cucumber-based security suite for both the public websit
 ### Setup
 
 ```bash
-cp configuration-test.properties.template configuration-test.properties
+cp configuration.properties.template configuration.properties
 export WEATHER_API_KEY=your_api_key_here
 ```
 
@@ -355,15 +379,16 @@ mvn -Dtest=ContractCukesRunner test
 
 - Allure results are generated under `target/allure-results/` during local runs. If you see a root-level `allure-results/` directory, it likely contains stale, committed artifacts from earlier runs. These have been removed and the directory is ignored going forward.
 
-### Maven CLI notes (multi-line usage)
-If you see `Unknown lifecycle phase` when using multi-line commands, it's almost always due to a bad line continuation. Either use a single line or ensure each line ends with a backslash with no trailing spaces. For example:
+### Maven CLI notes (multi-line usage and ENV)
+If you see `Unknown lifecycle phase` when using multi-line commands, it's almost always due to a bad line continuation. Either use a single line or ensure each line ends with a backslash with no trailing spaces. Also remember: pass environment selections with `-DENV=...`, not as a bare token.
 
 ```bash
 # Single line (recommended)
-mvn -B -V -Dheadless=true -DWEATHER_API_KEY="$WEATHER_API_KEY" -Dtest=CukesRunner test
+mvn -B -V -Dheadless=true -DWEATHER_API_KEY="$WEATHER_API_KEY" -DENV=staging -Dtest=CukesRunner test
 
 # Multi-line (correct)
 mvn -B -V -Dheadless=true \
   -DWEATHER_API_KEY="$WEATHER_API_KEY" \
+  -DENV=staging \
   -Dtest=CukesRunner test
 ```
