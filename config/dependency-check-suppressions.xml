@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+  <!-- Example suppression (commented):
+  <suppress>
+    <notes>False positive: library X vulnerable path not used; tracked in SEC-1234. Expires 2026-01-01</notes>
+    <cve>CVE-2020-12345</cve>
+    <until>2026-01-01Z</until>
+    <packageUrl regex="true">^pkg:maven/com\.example/library@.*$</packageUrl>
+  </suppress>
+  -->
+</suppressions>
+

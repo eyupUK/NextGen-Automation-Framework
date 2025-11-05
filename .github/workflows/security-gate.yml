@@ -1,0 +1,110 @@
+name: Security Gate
+
+on:
+  pull_request:
+    branches: [ main, master, develop, wip ]
+  push:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security-gate:
+    name: SAST + Dependency + License/SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      # Optional: NVD API key for OWASP Dependency-Check (speeds up NVD downloads, reduces throttling)
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java (temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Prepare Dependency-Check data dir and initialize DB (retry)
+        id: dc-init
+        shell: bash
+        run: |
+          set -e
+          DATA_DIR="$HOME/.m2/dependency-check-data"
+          mkdir -p "$DATA_DIR"
+          # Build optional NVD arg only if secret is set
+          NVD_ARG=""
+          if [ -n "${NVD_API_KEY}" ]; then NVD_ARG="-DnvdApiKey=${NVD_API_KEY}"; fi
+
+          echo "Using Dependency-Check data directory: $DATA_DIR"
+          # First attempt: update-only to warm/validate the DB
+          if ! ./mvnw -B -ntp -s .mvn/ci-settings.xml \
+            org.owasp:dependency-check-maven:10.0.4:update-only \
+            -Ddependency-check.autoUpdate=true \
+            -DdataDirectory="$DATA_DIR" $NVD_ARG; then
+            echo "First DC update failed, cleaning data directory and retrying..."
+            rm -rf "$DATA_DIR" && mkdir -p "$DATA_DIR"
+            ./mvnw -B -ntp -s .mvn/ci-settings.xml \
+              org.owasp:dependency-check-maven:10.0.4:update-only \
+              -Ddependency-check.autoUpdate=true \
+              -DdataDirectory="$DATA_DIR" $NVD_ARG
+          fi
+          echo "data_dir=$DATA_DIR" >> "$GITHUB_OUTPUT"
+          echo "nvd_arg=$NVD_ARG" >> "$GITHUB_OUTPUT"
+
+      - name: Run Security Gate
+        shell: bash
+        run: |
+          set -e
+          DATA_DIR='${{ steps.dc-init.outputs.data_dir }}'
+          NVD_ARG='${{ steps.dc-init.outputs.nvd_arg }}'
+          ./mvnw -B -ntp -s .mvn/ci-settings.xml \
+            -DskipTests=true \
+            -Ddependency-check.autoUpdate=true \
+            -DdataDirectory="$DATA_DIR" $NVD_ARG \
+            -Psecurity-gate \
+            verify
+
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-gate-reports
+          path: |
+            target/spotbugs/*.xml
+            target/spotbugs/*.html
+            target/dependency-check-report/**
+            target/generated-sources/license/THIRD-PARTY.txt
+            target/bom.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Security Gate Summary
+        if: always()
+        run: |
+          echo "# 🔐 Security Gate" >> $GITHUB_STEP_SUMMARY
+          echo "Result: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts: security-gate-reports" >> $GITHUB_STEP_SUMMARY
+          echo "Components:" >> $GITHUB_STEP_SUMMARY
+          echo "- SpotBugs + FindSecBugs (fail on High)" >> $GITHUB_STEP_SUMMARY
+          echo "- OWASP Dependency-Check (fail on CVSS v3 ≥ 8.0)" >> $GITHUB_STEP_SUMMARY
+          echo "- License inventory (THIRD-PARTY.txt)" >> $GITHUB_STEP_SUMMARY
+          echo "- CycloneDX SBOM (bom.json)" >> $GITHUB_STEP_SUMMARY
