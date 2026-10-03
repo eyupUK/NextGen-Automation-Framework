@@ -7,6 +7,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 public abstract class BasePage {
     protected WebDriver driver;
@@ -59,6 +60,16 @@ public abstract class BasePage {
 
     protected void goTo(String url) {
         driver.get(url);
+    }
+
+    protected Optional<WebElement> findOptionalElement(By locator) {
+        return driver.findElements(locator)
+                .stream()
+                .findFirst();
+    }
+
+    protected void clickOptionalButton(By locator){
+        findOptionalElement(locator).ifPresent(WebElement::click);
     }
 
 }
